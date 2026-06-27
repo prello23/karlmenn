@@ -1,0 +1,46 @@
+name: Add karlmenn SSL setup script
+
+on:
+  push:
+    branches:
+      - beta
+
+jobs:
+  setup:
+    runs-on: self-hosted
+    steps:
+      - name: Setup nginx + site
+        run: |
+          sudo mkdir -p /var/www/karlmenn/public
+          sudo chown -R deploy:deploy /var/www/karlmenn
+          sudo chmod -R 755 /var/www/karlmenn
+
+          # Copy placeholder
+          sudo cp /home/deploy/karlmenn-web/public/index.php /var/www/karlmenn/public/
+
+          # Create nginx config
+          sudo tee /etc/nginx/sites-available/karlmenn > /dev/null <<'NGINX'
+          server {
+              listen 80;
+              server_name karlmenn.outzone.is;
+              root /var/www/karlmenn/public;
+              index index.php index.html;
+              location / {
+                  try_files $uri $uri/ /index.php?$query_string;
+              }
+              location ~ \.php$ {
+                  fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
+                  fastcgi_index index.php;
+                  fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                  include fastcgi_params;
+              }
+              location ~ /\.ht { deny all; }
+          }
+          NGINX
+          sudo ln -sf /etc/nginx/sites-available/karlmenn /etc/nginx/sites-enabled/karlmenn
+          sudo nginx -t && sudo systemctl reload nginx
+          echo "✅ Nginx configured"
+
+      - name: SSL cert
+        run: |
+          sudo certbot --nginx -d karlmenn.outzone.is --non-interactive --agree-tos -m info@karlmenn.is
