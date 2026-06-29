@@ -1,4 +1,9 @@
-# SPEC: karlmenn.is — Samfélag og stuðningur fyrir karlmenn
+# SPEC: ekkieinn.is — Samfélag og stuðningur fyrir karlmenn
+
+> **Lénið:** `ekkieinn.is` — "Ekki einn" — passar við slagorðið "Þú ert ekki einn."
+> **Geymsla (repo):** https://github.com/prello23/karlmenn (public)
+> **Hýsing:** VPS 2.24.69.9 · `/var/www/ekkieinn/`
+> **Email:** `info@ekkieinn.is`
 
 ## Verkefnislýsing
 Vefsíða og samfélag fyrir karlmenn sem hafa:
@@ -48,7 +53,7 @@ Einnig stuðningur fyrir karlmenn sem eru **gerendur** og vilja breyta hegðun s
 
 ### 1. Forsíða (/)
 **Hero section:**
-- Stór heading: "Þú ert ekki einn." 
+- Stór heading: "Þú ert ekki einn."
 - Sub: "Samfélag og stuðningur fyrir karlmenn."
 - Tveir CTA hnappir: "Skrá mig" og "Kynna mér meira"
 - Bakgrunnsmynd: abstract, masculine, dökk
@@ -76,7 +81,7 @@ Einnig stuðningur fyrir karlmenn sem eru **gerendur** og vilja breyta hegðun s
 
 **Footer:**
 - Lítil links: Persónuvernd, Skilmálar, Samband
-- Email: info@karlmenn.is
+- Email: info@ekkieinn.is
 
 ---
 
@@ -123,7 +128,7 @@ Forum-líkt — þráðar og svör.
 - /um-okkur — um verkefnið
 - /personuvernd — GDPR
 - /skilmalar — terms
-- /samband — contact form → info@karlmenn.is
+- /samband — contact form → info@ekkieinn.is
 - /neydarhjälp — crisis resources
 
 ---
@@ -152,14 +157,18 @@ support_requests (id, user_id, type [legal/psych], description, status, created_
 ## CLAUDE.md (setja í repo root)
 
 ```markdown
-# Karlmenn.is — Developer Guide
+# Ekki Einn — ekkieinn.is — Developer Guide
 
 ## Stack
 - Next.js 15 App Router + TypeScript
 - Tailwind CSS + shadcn/ui
-- PostgreSQL (prisma ORM)
+- PostgreSQL (Prisma ORM)
 - NextAuth.js v5
 - Stripe
+
+## Domain
+- Production: https://ekkieinn.is
+- Email: info@ekkieinn.is
 
 ## Commands
 - `npm run dev` — þróunarþjónn
@@ -184,21 +193,24 @@ Litaþema: background #0F1117, accent #F59E0B, text #F8F9FA.
 ## Verkefnalisti fyrir Claude Code
 
 1. **Setja upp Next.js 15 + TypeScript + Tailwind + shadcn/ui**
-2. **Búa til litaþema** í tailwind.config.ts
-3. **Forsíða** — hero, 3 sections, donate CTA, crisis info
-4. **Layout** — header með navigation, footer
+2. **Búa til litaþema** í tailwind.config.ts — nota liti úr spec
+3. **Forsíða** — hero ("Þú ert ekki einn."), 3 sections, donate CTA, crisis info
+4. **Layout** — header með navigation, footer með info@ekkieinn.is
 5. **NextAuth.js** — email magic link auth
 6. **Prisma + PostgreSQL schema** — users, threads, replies, donations
 7. **Forum síða** — /samfelag með categories og threads
 8. **Framlög síða** — Stripe integration (test mode)
-9. **Allar upplýsingasíður** — um-okkur, personuvernd, skilmalar, samband, neydarhjálp
+9. **Allar upplýsingasíður** — um-okkur, personuvernd, skilmalar, samband, neydarhjälp
 10. **README.md** með setup leiðbeiningum
+11. **CLAUDE.md** í repo root
 
 ---
 
 ## Athugasemdir
 - Allt í íslenska tungumáli
+- Lénið er **ekkieinn.is** — ekki karlmenn.is (repo heitir enn karlmenn)
 - Nafnlæg þátttaka í boði á forum
 - GDPR-samhæft (Ísland = EEA)
 - Ekkert klæðnaðarmerki eða lógó fyrst — við finnum það seinna
 - Mobile-first á öllu
+- Contact email: info@ekkieinn.is (EKKI karlmenn.is)
