@@ -25,7 +25,7 @@ Admin panel (`/admin`) á að innihalda ALL þessar síður:
 - **Nafn geranda** (text input, optional) — skráist aðeins í DB
 
 ### Skýring sem sýna á notanda (texti undir reitunum):
-> "Þessar upplýsingar eru einungis notaðar til lögfræðilegrar aðstoðar ef fleiri mál um sama geranda berast til okkar. Þær verða aldrei sýnilegar á þræðinum."
+> "Þessar upplýsingar eru einungis notaðar til lögrfræðilegrar aðstoðar ef fleiri mál um sama geranda berast til okkar. Þær verða aldrei sýnilegar á þræðinum."
 
 ### Í Prisma schema (Thread model):
 ```prisma
