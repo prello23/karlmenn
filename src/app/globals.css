@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ekkieinn.is brand palette (SPEC.md) — always dark, warm accent */
+    --background: 225 21% 7%; /* #0F1117 */
+    --foreground: 210 17% 98%; /* #F8F9FA */
+
+    --surface: 225 28% 14%; /* #1A1F2E */
+    --surface-foreground: 210 17% 98%;
+
+    --card: 225 26% 12%;
+    --card-foreground: 210 17% 98%;
+
+    --popover: 225 28% 11%;
+    --popover-foreground: 210 17% 98%;
+
+    --primary: 38 92% 50%; /* #F59E0B amber */
+    --primary-foreground: 225 30% 8%;
+
+    --secondary: 225 22% 18%;
+    --secondary-foreground: 210 17% 98%;
+
+    --accent: 38 92% 50%; /* amber */
+    --accent-foreground: 225 30% 8%;
+
+    --muted: 225 18% 18%;
+    --muted-foreground: 220 9% 60%; /* lighter than #6B7280 for contrast */
+
+    --success: 160 84% 39%; /* #10B981 */
+    --success-foreground: 225 30% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 17% 98%;
+
+    --border: 222 18% 20%;
+    --input: 222 18% 22%;
+    --ring: 38 92% 50%;
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  ::selection {
+    @apply bg-primary/30 text-foreground;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  /* Subtle warm radial glow used behind hero sections */
+  .hero-glow {
+    background:
+      radial-gradient(
+        60% 50% at 50% 0%,
+        hsl(38 92% 50% / 0.10) 0%,
+        transparent 70%
+      ),
+      radial-gradient(
+        40% 40% at 80% 20%,
+        hsl(225 60% 40% / 0.12) 0%,
+        transparent 70%
+      );
+  }
+  .dotted-grid {
+    background-image: radial-gradient(
+      hsl(220 14% 30% / 0.25) 1px,
+      transparent 1px
+    );
+    background-size: 22px 22px;
+  }
+}

@@ -1,0 +1,170 @@
+// ekkieinn.is — Prisma schema
+// SQLite by default (see DATABASE_URL). For PostgreSQL, change provider to
+// "postgresql" and update DATABASE_URL, then run `npx prisma db push`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum SupportType {
+  LEGAL
+  PSYCH
+}
+
+enum SupportStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+// ---- Users -----------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String?
+  username     String?  @unique
+  displayName  String?
+  image        String?
+  isAnonymous  Boolean  @default(true)
+  role         Role     @default(USER)
+
+  // Email verification (custom flow — single-use token, 48h expiry).
+  emailVerified  Boolean   @default(false)
+  verifyToken    String?   @unique
+  verifyTokenExp DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  threads         Thread[]
+  replies         Reply[]
+  supportRequests SupportRequest[]
+}
+
+// ---- Forum -----------------------------------------------------------------
+
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String
+  icon        String
+  order       Int      @default(0)
+  // Some categories (e.g. "Gerendur") require an application/approval.
+  restricted  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  threads     Thread[]
+}
+
+model Thread {
+  id         String @id @default(cuid())
+  categoryId String
+  authorId   String
+
+  title   String
+  // Publicly stored content — names are anonymized BEFORE saving.
+  content String
+
+  // PRIVATE — never shown publicly. Visible to admins only, used to connect
+  // multiple cases about the same perpetrator for legal support.
+  victimName      String?
+  perpetratorName String?
+
+  isAnonymous        Boolean @default(true)
+  isPinned           Boolean @default(false)
+  isLocked           Boolean @default(false)
+  hasAnonymizedNames Boolean @default(false)
+  upvotes            Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  author   User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  replies  Reply[]
+
+  @@index([categoryId])
+  @@index([perpetratorName])
+}
+
+model Reply {
+  id       String @id @default(cuid())
+  threadId String
+  authorId String
+  content  String
+
+  // Set when the AI name check suspects a person name slipped through.
+  flagged    Boolean @default(false)
+  flagReason String?
+  upvotes    Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+}
+
+// ---- Donations -------------------------------------------------------------
+
+model Donation {
+  id              String   @id @default(cuid())
+  amount          Int // smallest currency unit
+  currency        String   @default("isk")
+  stripePaymentId String?  @unique
+  isRecurring     Boolean  @default(false)
+  isAnonymous     Boolean  @default(true)
+  donorName       String?
+  message         String?
+  createdAt       DateTime @default(now())
+}
+
+// ---- Support requests ------------------------------------------------------
+
+model SupportRequest {
+  id          String        @id @default(cuid())
+  userId      String?
+  name        String?
+  email       String?
+  type        SupportType
+  description String
+  status      SupportStatus @default(OPEN)
+  createdAt   DateTime      @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+// ---- Admin notifications ---------------------------------------------------
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String // e.g. "FLAGGED_REPLY"
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ---- Key/value settings (editable in admin) --------------------------------
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
