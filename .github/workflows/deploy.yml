@@ -1,0 +1,53 @@
+name: Deploy ekkieinn.is
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Pull latest code
+        run: |
+          cd /home/deploy/karlmenn
+          git fetch origin main
+          git reset --hard origin/main
+          echo "Code updated"
+
+      - name: Install dependencies
+        run: |
+          cd /home/deploy/karlmenn
+          npm ci --production=false
+          echo "Dependencies installed"
+
+      - name: Generate Prisma client
+        run: |
+          cd /home/deploy/karlmenn
+          npx prisma generate
+          echo "Prisma client generated"
+
+      - name: Run DB migrations
+        run: |
+          cd /home/deploy/karlmenn
+          npx prisma db push --accept-data-loss
+          echo "DB migrated"
+
+      - name: Build Next.js
+        run: |
+          cd /home/deploy/karlmenn
+          npm run build
+          echo "Build complete"
+
+      - name: Restart with PM2
+        run: |
+          cd /home/deploy/karlmenn
+          # Restart or start
+          pm2 describe ekkieinn > /dev/null 2>&1 && pm2 restart ekkieinn || pm2 start ecosystem.config.js
+          pm2 save
+          echo "PM2 restarted"
+
+      - name: Verify running
+        run: |
+          sleep 5
+          curl -sf http://localhost:3002 > /dev/null && echo "Site is UP!" || echo "WARNING: Site not responding on port 3002"
