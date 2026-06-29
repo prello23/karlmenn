@@ -47,7 +47,7 @@ const STEPS = [
   {
     icon: HeartHandshake,
     title: "Fáðu aðstoð",
-    body: "Lögfræðileg og sálfræðileg ráðgjöf frá fagfólki og sjálfboðaliðum.",
+    body: "Lögfræðileg og sálfræðileg ráðgjöf frá fagfólki.",
   },
 ];
 

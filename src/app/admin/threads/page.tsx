@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, Flag, Pin, Lock } from "lucide-react";
+import { Search, Flag, Pin, Lock, EyeOff } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
@@ -87,6 +87,7 @@ export default async function AdminThreadsPage({
                     <div className="flex items-center gap-2">
                       {t.isPinned && <Pin className="h-3.5 w-3.5 text-primary" />}
                       {t.isLocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                      {t.isHidden && <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
                       <span className="font-medium">{t.title}</span>
                       {t.replies.length > 0 && (
                         <Badge variant="destructive">

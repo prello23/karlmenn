@@ -88,7 +88,7 @@ export type Supporter = {
 
 export const SUPPORTERS: Supporter[] = [
   {
-    name: "Lögfræðiþjónusta í sjálfboðavinnu",
+    name: "Lögfræðiþjónusta",
     role: "Lögfræðingur",
     field: "legal",
     description:
@@ -105,7 +105,7 @@ export const SUPPORTERS: Supporter[] = [
   },
   {
     name: "Jafningjastuðningur",
-    role: "Sjálfboðaliði",
+    role: "Jafningi",
     field: "psych",
     description:
       "Karlmenn sem hafa gengið í gegnum svipaða reynslu og bjóða hlustun og leiðsögn.",

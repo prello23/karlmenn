@@ -29,7 +29,7 @@ export default async function ThreadPage({
   await requireUser();
   const { slug, threadId } = await params;
   const thread = await getThread(threadId);
-  if (!thread) notFound();
+  if (!thread || thread.isHidden) notFound();
 
   return (
     <section className="py-12">

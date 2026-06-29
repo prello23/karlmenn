@@ -87,6 +87,7 @@ model Thread {
   isAnonymous        Boolean @default(true)
   isPinned           Boolean @default(false)
   isLocked           Boolean @default(false)
+  isHidden           Boolean @default(false)
   hasAnonymizedNames Boolean @default(false)
   upvotes            Int     @default(0)
 

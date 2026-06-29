@@ -21,6 +21,23 @@ Ef þú skráðir þig ekki, hunsa þennan póst.
 Kveðja,
 Teymið hjá Ekki einn`,
   admin_notification_email: "info@ekkieinn.is",
+
+  // ---- Almennt ----
+  site_tagline: "Samfélag og stuðningur fyrir karlmenn",
+  about_text:
+    "ekkieinn.is er vettvangur fyrir karlmenn sem hafa orðið fyrir ofbeldi, rangar sakir eða misnotkun.",
+  contact_email: "info@ekkieinn.is",
+
+  // ---- Skráning ----
+  new_registrations: "true",
+  require_email_verify: "true",
+
+  // ---- Vettvangsreglur ----
+  forum_min_post_length: "20",
+  welcome_message: "",
+
+  // ---- Kerfið ----
+  maintenance_mode: "false",
 } as const;
 
 export type SettingKey = keyof typeof SETTING_DEFAULTS;

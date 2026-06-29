@@ -34,7 +34,7 @@ export default function SupportPage() {
       <PageHero
         eyebrow="Stuðningur"
         title="Þú þarft ekki að gera þetta einn"
-        description="Hér finnur þú fagfólk og sjálfboðaliða sem bjóða lögfræðilega og sálfræðilega aðstoð — og þú getur beðið um stuðning beint."
+        description="Hér finnur þú fagfólk sem býður lögfræðilega og sálfræðilega aðstoð — og þú getur beðið um stuðning beint."
       />
 
       {/* Supporters */}
@@ -42,7 +42,7 @@ export default function SupportPage() {
         <div className="container">
           <h2 className="text-2xl font-bold tracking-tight">Fagaðstoð</h2>
           <p className="mt-2 text-muted-foreground">
-            Aðstoð í boði í gegnum verkefnið — sumt í sjálfboðavinnu, annað fjármagnað með framlögum.
+            Aðstoð í boði í gegnum verkefnið — fjármagnað með framlögum og styrktarfé.
           </p>
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {SUPPORTERS.map((s) => {

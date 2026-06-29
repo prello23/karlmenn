@@ -10,7 +10,7 @@ export default async function AdminSettingsPage() {
     <div>
       <h1 className="text-3xl font-bold tracking-tight">Stillingar</h1>
       <p className="mt-2 text-muted-foreground">
-        Stjórnaðu texta staðfestingarpósts og tilkynningum.
+        Stjórnaðu almennum stillingum, skráningu, vettvangsreglum og tölvupósti.
       </p>
 
       <div className="mt-8 max-w-2xl">

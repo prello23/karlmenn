@@ -38,6 +38,20 @@ export async function toggleThreadFlag(formData: FormData) {
   revalidatePath(`/admin/threads/${id}`);
 }
 
+export async function toggleThreadHidden(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const thread = await prisma.thread.findUnique({ where: { id } });
+  if (!thread) return;
+  await prisma.thread.update({
+    where: { id },
+    data: { isHidden: !thread.isHidden },
+  });
+  revalidatePath(`/admin/threads/${id}`);
+  revalidatePath("/admin/threads");
+  revalidatePath("/forum");
+}
+
 export async function deleteReply(formData: FormData) {
   await requireAdmin();
   const id = String(formData.get("id"));
@@ -178,7 +192,10 @@ export async function saveSettings(
   formData: FormData,
 ): Promise<SettingsState> {
   await requireAdmin();
+  const checkbox = (name: string) =>
+    formData.get(name) === "on" ? "true" : "false";
   try {
+    // Staðfestingarpóstur / tilkynningar
     await setSetting(
       "verify_email_subject",
       String(formData.get("verify_email_subject") ?? ""),
@@ -191,6 +208,28 @@ export async function saveSettings(
       "admin_notification_email",
       String(formData.get("admin_notification_email") ?? ""),
     );
+
+    // Almennt
+    await setSetting("site_tagline", String(formData.get("site_tagline") ?? ""));
+    await setSetting("about_text", String(formData.get("about_text") ?? ""));
+    await setSetting("contact_email", String(formData.get("contact_email") ?? ""));
+
+    // Skráning
+    await setSetting("new_registrations", checkbox("new_registrations"));
+    await setSetting("require_email_verify", checkbox("require_email_verify"));
+
+    // Vettvangsreglur
+    await setSetting(
+      "forum_min_post_length",
+      String(formData.get("forum_min_post_length") ?? ""),
+    );
+    await setSetting(
+      "welcome_message",
+      String(formData.get("welcome_message") ?? ""),
+    );
+
+    // Kerfið
+    await setSetting("maintenance_mode", checkbox("maintenance_mode"));
   } catch {
     return { error: "Ekki tókst að vista stillingar." };
   }

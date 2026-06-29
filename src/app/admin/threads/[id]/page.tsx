@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Flag, Search, Pin, Lock, Trash2 } from "lucide-react";
+import { ArrowLeft, Flag, Search, Pin, Lock, Trash2, EyeOff, Eye } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import {
   deleteReply,
   clearReplyFlag,
   toggleThreadFlag,
+  toggleThreadHidden,
 } from "@/app/admin/actions";
 import { authorLabel } from "@/lib/forum";
 import { formatDate } from "@/lib/utils";
@@ -53,7 +54,12 @@ export default async function AdminThreadDetail({
 
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{thread.title}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {thread.title}
+            {thread.isHidden && (
+              <Badge variant="secondary" className="ml-2">Falinn</Badge>
+            )}
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {thread.category.name} · {formatDate(thread.createdAt)} ·{" "}
             {authorLabel(thread.author, thread.isAnonymous)}
@@ -75,6 +81,13 @@ export default async function AdminThreadDetail({
             <Button type="submit" variant="outline" size="sm">
               <Lock className="h-4 w-4" />
               {thread.isLocked ? "Opna" : "Læsa"}
+            </Button>
+          </form>
+          <form action={toggleThreadHidden}>
+            <input type="hidden" name="id" value={thread.id} />
+            <Button type="submit" variant={thread.isHidden ? "default" : "outline"} size="sm">
+              {thread.isHidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              {thread.isHidden ? "Birta þráð" : "Fela þráð"}
             </Button>
           </form>
           <form action={deleteThread}>

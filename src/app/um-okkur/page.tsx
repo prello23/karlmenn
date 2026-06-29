@@ -87,7 +87,7 @@ export default function AboutPage() {
               </h2>
               <p className="mt-3 text-muted-foreground">
                 Ekki einn er rekið án hagnaðarsjónarmiða og byggir á frjálsum
-                framlögum og sjálfboðavinnu.
+                framlögum og styrktarfé.
               </p>
               <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
                 <Button asChild>
