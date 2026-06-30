@@ -330,43 +330,27 @@ export function TipTapEditor({
         )}
       </div>
 
-      {/* Live preview — renders exactly as the public page */}
-      <div>
-        <div className="mb-3 flex items-center gap-3">
-          <span className="text-sm font-semibold text-foreground">
-            👁️ Forskoðun
-          </span>
-          <span className="h-px flex-1 bg-border" />
-          <span className="text-xs text-muted-foreground">
-            eins og síðan birtist
-          </span>
-        </div>
-        <div className="rounded-lg border border-border bg-background p-5 sm:p-8">
-          <div className="mx-auto max-w-3xl">
-            {previewTitle && (
-              <h1 className="mb-5 text-3xl font-bold tracking-tight sm:text-4xl">
-                {previewTitle}
-              </h1>
-            )}
-            {html.replace(/<[^>]*>/g, "").trim() ? (
-              <div
-                className="page-content"
-                dangerouslySetInnerHTML={{ __html: html }}
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Forskoðun birtist hér þegar þú skrifar efni.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-
       {showImage && (
         <ImageDialog
           onClose={() => setShowImage(false)}
           onInsert={insertImage}
         />
+      )}
+
+      {/* Live Preview */}
+      {previewTitle && (
+        <div className="mt-6">
+          <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
+            <span>👁</span>
+            <span>Forskoðun</span>
+            <span className="flex-1 border-t border-gray-700"></span>
+            <span className="text-xs text-gray-500">eins og síðan birtist</span>
+          </div>
+          <div className="page-content rounded-xl border border-gray-700 p-6 bg-[rgb(11,13,19)]">
+            <h1 className="text-2xl font-bold mb-4">{previewTitle}</h1>
+            <div dangerouslySetInnerHTML={{ __html: html }} />
+          </div>
+        </div>
       )}
     </div>
   );
