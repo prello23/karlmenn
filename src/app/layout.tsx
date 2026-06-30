@@ -30,11 +30,17 @@ export const metadata: Metadata = {
     "Ísland",
     "samfélag",
   ],
+  icons: {
+    icon: "/favicon-32x32.png",
+    shortcut: "/favicon-32x32.png",
+    apple: "/apple-icon.png",
+  },
   openGraph: {
     title: "Ekki einn — Þú ert ekki einn",
     description: "Samfélag og stuðningur fyrir karlmenn.",
     locale: "is_IS",
     type: "website",
+    images: ["/logo.png"],
   },
 };
 

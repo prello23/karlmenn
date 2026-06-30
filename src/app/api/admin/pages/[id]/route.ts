@@ -31,6 +31,7 @@ export async function GET(
 const updateSchema = z.object({
   title: z.string().trim().min(1, "Titil vantar").max(200),
   menuTitle: z.string().trim().min(1, "Heiti í valmynd vantar").max(120),
+  category: z.enum(["", "about", "legal", "contact"]).optional().default(""),
   metaDescription: z.string().trim().max(300).optional().default(""),
   content: z.string().optional().default(""),
 });

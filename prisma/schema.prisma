@@ -177,6 +177,7 @@ model Page {
   slug            String   @unique // t.d. "forsida", "um-okkur", "studningur"
   title           String // Titill síðu (birtist í vafraflipa)
   menuTitle       String // Heiti í valmynd
+  category        String   @default("") // flokkur: "about" | "legal" | "contact" | ""
   metaDescription String   @default("")
   content         String   @default("") // HTML content
   updatedAt       DateTime @updatedAt

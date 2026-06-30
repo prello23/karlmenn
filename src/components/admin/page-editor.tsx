@@ -21,9 +21,17 @@ type PageData = {
   slug: string;
   title: string;
   menuTitle: string;
+  category: string;
   metaDescription: string;
   content: string;
 };
+
+const CATEGORY_OPTIONS = [
+  { value: "", label: "Enginn flokkur" },
+  { value: "about", label: "Um okkur (about)" },
+  { value: "legal", label: "Lögfræðilegt (legal)" },
+  { value: "contact", label: "Samband (contact)" },
+];
 
 /** Map a page slug to its public URL. */
 function publicHref(slug: string): string {
@@ -37,6 +45,7 @@ export function PageEditor({ page }: { page?: PageData }) {
   const [slug, setSlug] = useState(page?.slug ?? "");
   const [title, setTitle] = useState(page?.title ?? "");
   const [menuTitle, setMenuTitle] = useState(page?.menuTitle ?? "");
+  const [category, setCategory] = useState(page?.category ?? "");
   const [metaDescription, setMetaDescription] = useState(
     page?.metaDescription ?? "",
   );
@@ -59,8 +68,8 @@ export function PageEditor({ page }: { page?: PageData }) {
           headers: { "content-type": "application/json" },
           body: JSON.stringify(
             isEdit
-              ? { title, menuTitle, metaDescription, content }
-              : { slug, title, menuTitle, metaDescription, content },
+              ? { title, menuTitle, category, metaDescription, content }
+              : { slug, title, menuTitle, category, metaDescription, content },
           ),
         },
       );
@@ -155,6 +164,22 @@ export function PageEditor({ page }: { page?: PageData }) {
             value={menuTitle}
             onChange={(e) => setMenuTitle(e.target.value)}
           />
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="category">Flokkur</Label>
+          <select
+            id="category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="flex h-10 w-full rounded-lg border border-input bg-surface px-3 py-2 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            {CATEGORY_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="grid gap-2">

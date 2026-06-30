@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ShieldCheck, Phone } from "lucide-react";
+import Image from "next/image";
+import { Phone } from "lucide-react";
 
 import { FOOTER_NAV } from "@/lib/nav";
 import { SITE } from "@/lib/content";
@@ -10,11 +11,14 @@ export function SiteFooter() {
       <div className="container py-14">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
-            <Link href="/" className="flex items-center gap-2 font-semibold">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                <ShieldCheck className="h-5 w-5" />
-              </span>
-              <span className="text-lg tracking-tight">{SITE.name}</span>
+            <Link href="/" aria-label="EkkiEinn.is — forsíða" className="flex items-center">
+              <Image
+                src="/logo.png"
+                alt="EkkiEinn.is"
+                width={358}
+                height={273}
+                className="h-9 w-auto"
+              />
             </Link>
             <p className="max-w-xs text-sm text-muted-foreground">
               {SITE.tagline} Byggt á frjálsum framlögum og styrktarfé.

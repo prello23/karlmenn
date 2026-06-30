@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import Image from "next/image";
 
 export function AuthCard({
   title,
@@ -17,11 +17,18 @@ export function AuthCard({
       <div className="absolute inset-0 hero-glow" aria-hidden />
       <div className="container relative max-w-md">
         <div className="rounded-2xl border border-border bg-card p-8 shadow-xl">
-          <Link href="/" className="mb-6 flex items-center justify-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
-              <ShieldCheck className="h-5 w-5" />
-            </span>
-            <span className="text-lg font-semibold tracking-tight">Ekki einn</span>
+          <Link
+            href="/"
+            aria-label="EkkiEinn.is — forsíða"
+            className="mb-6 flex items-center justify-center"
+          >
+            <Image
+              src="/logo.png"
+              alt="EkkiEinn.is"
+              width={358}
+              height={273}
+              className="h-12 w-auto"
+            />
           </Link>
           <h1 className="text-center text-2xl font-bold tracking-tight">{title}</h1>
           {subtitle && (

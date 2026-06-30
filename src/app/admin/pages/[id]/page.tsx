@@ -30,6 +30,7 @@ export default async function AdminEditPage({
             slug: page.slug,
             title: page.title,
             menuTitle: page.menuTitle,
+            category: page.category,
             metaDescription: page.metaDescription,
             content: page.content,
           }}

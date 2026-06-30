@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X, ShieldCheck, Settings, ShieldAlert, LogOut } from "lucide-react";
+import { Menu, X, Settings, ShieldAlert, LogOut } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { MAIN_NAV } from "@/lib/nav";
@@ -28,11 +29,15 @@ export function HeaderClient({
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary">
-            <ShieldCheck className="h-5 w-5" />
-          </span>
-          <span className="text-lg tracking-tight">Ekki einn</span>
+        <Link href="/" aria-label="EkkiEinn.is — forsíða" className="flex items-center">
+          <Image
+            src="/logo.png"
+            alt="EkkiEinn.is"
+            width={358}
+            height={273}
+            priority
+            className="h-10 w-auto"
+          />
         </Link>
 
         {/* Desktop nav */}
