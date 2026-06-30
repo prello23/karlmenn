@@ -4,14 +4,7 @@ import { notFound } from "next/navigation";
 import { MessageSquare, ArrowUp, Pin, ArrowLeft, Lock } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { NewThreadForm } from "@/components/forum/new-thread-form";
+import { ThreadComposer } from "@/components/forum/thread-composer";
 import { getCategoryBySlug, getThreads, authorLabel } from "@/lib/forum";
 import { requireUser } from "@/lib/auth-helpers";
 import { formatDate } from "@/lib/utils";
@@ -72,8 +65,16 @@ export default async function CategoryPage({
           </div>
         </div>
 
+        {/* Create-thread button (form opens on click, not automatically) */}
+        <div className="mt-8">
+          <ThreadComposer
+            categorySlug={slug}
+            restricted={category.restricted}
+          />
+        </div>
+
         {/* Threads */}
-        <div className="mt-10 space-y-3">
+        <div className="mt-8 space-y-3">
           {threads.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border bg-surface/30 p-10 text-center">
               <MessageSquare className="mx-auto h-8 w-8 text-muted-foreground" />
@@ -120,21 +121,6 @@ export default async function CategoryPage({
             ))
           )}
         </div>
-
-        {/* New thread */}
-        <Card className="mt-12">
-          <CardHeader>
-            <CardTitle>Byrja nýja umræðu</CardTitle>
-            <CardDescription>
-              {category.restricted
-                ? "Þetta svæði krefst samþykkis. Færslur eru yfirfarnar af umsjónarmönnum áður en þær birtast."
-                : "Deildu reynslu þinni eða spurningu. Nöfn eru fjarlægð sjálfkrafa."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <NewThreadForm categorySlug={slug} />
-          </CardContent>
-        </Card>
       </div>
     </section>
   );

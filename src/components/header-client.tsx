@@ -7,17 +7,18 @@ import { usePathname } from "next/navigation";
 import { Menu, X, Settings, ShieldAlert, LogOut } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { MAIN_NAV } from "@/lib/nav";
 import { Button } from "@/components/ui/button";
 
 export function HeaderClient({
   isAuthed,
   isAdmin,
   logoutAction,
+  navItems,
 }: {
   isAuthed: boolean;
   isAdmin: boolean;
   logoutAction: () => Promise<void>;
+  navItems: { href: string; label: string }[];
 }) {
   const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
@@ -42,7 +43,7 @@ export function HeaderClient({
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-1 md:flex">
-          {MAIN_NAV.map((item) => {
+          {navItems.map((item) => {
             const active = pathname.startsWith(item.href);
             return (
               <Link
@@ -109,7 +110,7 @@ export function HeaderClient({
       {open && (
         <div className="border-t border-border/60 bg-background md:hidden">
           <nav className="container flex flex-col gap-1 py-4">
-            {MAIN_NAV.map((item) => (
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

@@ -6,12 +6,15 @@ import { PageHero } from "@/components/page-hero";
 import { Badge } from "@/components/ui/badge";
 import { getCategoriesWithCounts } from "@/lib/forum";
 import { requireUser } from "@/lib/auth-helpers";
+import { getPageMetadata } from "@/components/db-page";
 
-export const metadata: Metadata = {
-  title: "Samfélag",
-  description:
-    "Spjallsvæði fyrir karlmenn — deildu reynslu, fáðu ráð og finndu fólk í sömu stöðu.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return getPageMetadata("samfelag", {
+    title: "Samfélag",
+    description:
+      "Spjallsvæði fyrir karlmenn — deildu reynslu, fáðu ráð og finndu fólk í sömu stöðu.",
+  });
+}
 
 export const dynamic = "force-dynamic";
 

@@ -4,12 +4,17 @@ import { Scale, Brain, Megaphone, ShieldCheck } from "lucide-react";
 import { PageHero } from "@/components/page-hero";
 import { Card, CardContent } from "@/components/ui/card";
 import { DonationForm } from "@/components/donation-form";
+import { getPageMetadata } from "@/components/db-page";
 
-export const metadata: Metadata = {
-  title: "Styrkja",
-  description:
-    "Framlög til EkkiEinn.is fara beint í lögfræðilega og sálfræðilega aðstoð fyrir karlmenn. Eitt skipti eða mánaðarlega, nafnlaust ef þú vilt.",
-};
+export const dynamic = "force-dynamic";
+
+export function generateMetadata(): Promise<Metadata> {
+  return getPageMetadata("styrkja", {
+    title: "Styrkja",
+    description:
+      "Framlög til EkkiEinn.is fara beint í lögfræðilega og sálfræðilega aðstoð fyrir karlmenn. Eitt skipti eða mánaðarlega, nafnlaust ef þú vilt.",
+  });
+}
 
 const ALLOCATION = [
   {

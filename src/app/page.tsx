@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Shield,
@@ -14,6 +15,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/section-heading";
 import { CrisisResources } from "@/components/crisis-resources";
+import { getPageMetadata } from "@/components/db-page";
+
+export const dynamic = "force-dynamic";
+
+export function generateMetadata(): Promise<Metadata> {
+  return getPageMetadata("forsida", {
+    title: "Ekki einn — Þú ert ekki einn",
+    description: "Samfélag og stuðningur fyrir karlmenn.",
+  });
+}
 
 const AUDIENCE = [
   {

@@ -11,12 +11,17 @@ import {
 } from "@/components/ui/card";
 import { SupportRequestForm } from "@/components/support-request-form";
 import { SUPPORTERS } from "@/lib/content";
+import { getPageMetadata } from "@/components/db-page";
 
-export const metadata: Metadata = {
-  title: "Stuðningur",
-  description:
-    "Lögfræðileg og sálfræðileg aðstoð fyrir karlmenn. Biddu um stuðning og kynntu þér réttindi þín.",
-};
+export const dynamic = "force-dynamic";
+
+export function generateMetadata(): Promise<Metadata> {
+  return getPageMetadata("studningur", {
+    title: "Stuðningur",
+    description:
+      "Lögfræðileg og sálfræðileg aðstoð fyrir karlmenn. Biddu um stuðning og kynntu þér réttindi þín.",
+  });
+}
 
 const RIGHTS = [
   "Þú átt rétt á að vera trúað og tekið alvarlega.",

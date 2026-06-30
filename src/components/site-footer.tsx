@@ -4,8 +4,10 @@ import { Phone } from "lucide-react";
 
 import { FOOTER_NAV } from "@/lib/nav";
 import { SITE } from "@/lib/content";
+import { getNavTitles, HREF_TO_SLUG } from "@/lib/pages";
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const titles = await getNavTitles();
   return (
     <footer className="border-t border-border/60 bg-surface/40">
       <div className="container py-14">
@@ -37,16 +39,20 @@ export function SiteFooter() {
                 {group}
               </h3>
               <ul className="space-y-2.5">
-                {links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
+                {links.map((link) => {
+                  const slug = HREF_TO_SLUG[link.href];
+                  const label = (slug && titles[slug]) || link.label;
+                  return (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {label}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
