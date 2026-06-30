@@ -92,7 +92,9 @@ export default async function AdminUserDetailPage({
         <InfoRow label="Fjöldi pósta">
           {user._count.threads} þræðir · {user._count.replies} svör
         </InfoRow>
-        <InfoRow label="IP tala">Ekki skráð</InfoRow>
+        <InfoRow label="IP tala (síðasta innskráning)">
+          {user.lastLoginIp ?? "Ekki skráð"}
+        </InfoRow>
       </div>
 
       {/* Edit / reset / delete */}

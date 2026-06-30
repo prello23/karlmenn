@@ -1,6 +1,7 @@
 "use server";
 
 import { AuthError } from "next-auth";
+import { headers } from "next/headers";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 
@@ -108,6 +109,20 @@ export async function loginAction(
           ? "Því miður var aðgangsbeiðni þinni hafnað."
           : "Aðgangurinn þinn bíður samþykkis stjórnanda.",
     };
+  }
+
+  // Capture the client IP for the admin user panel (best-effort, behind proxy).
+  try {
+    const h = await headers();
+    const ip =
+      h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      h.get("x-real-ip") ||
+      null;
+    if (ip) {
+      await prisma.user.update({ where: { id: user.id }, data: { lastLoginIp: ip } });
+    }
+  } catch {
+    // never block sign-in on IP capture
   }
 
   try {
