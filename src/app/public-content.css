@@ -1,0 +1,233 @@
+/* ===========================================================================
+   Shared rich page-content styles (WYSIWYG V3)
+   ---------------------------------------------------------------------------
+   These classes are scoped under .page-content so the admin contenteditable
+   editor and the live public pages render stored HTML IDENTICALLY. Add new
+   classes here; never rename existing ones.
+   =========================================================================== */
+
+/* Hero / centred intro --------------------------------------------------- */
+.page-content .hero {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+}
+.page-content h1,
+.page-content .hero-title {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: hsl(var(--foreground));
+  margin: 0 0 1rem;
+}
+.page-content .lead {
+  font-size: 1.25rem;
+  color: hsl(var(--muted-foreground));
+  max-width: 36rem;
+  margin: 0 auto 1.25rem;
+}
+.page-content .badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--surface) / 0.6);
+  color: hsl(var(--muted-foreground));
+  padding: 0.375rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Section helpers -------------------------------------------------------- */
+.page-content section {
+  padding: 2.5rem 0;
+}
+.page-content .section-label {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: hsl(var(--primary));
+  margin-bottom: 0.75rem;
+}
+.page-content .center {
+  text-align: center;
+}
+.page-content .muted {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Buttons ---------------------------------------------------------------- */
+.page-content .btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+.page-content .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.6rem;
+  text-decoration: none;
+}
+.page-content .btn-primary:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+.page-content .btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--foreground));
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.6rem;
+  text-decoration: none;
+}
+.page-content .btn-outline:hover {
+  background: hsl(var(--surface));
+}
+
+/* Feature cards --------------------------------------------------------- */
+.page-content .feature-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 2rem;
+}
+.page-content .feature-card {
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  border-radius: 1rem;
+  padding: 1.75rem;
+  transition: border-color 0.15s ease;
+}
+.page-content .feature-card:hover {
+  border-color: hsl(var(--primary) / 0.4);
+}
+.page-content .feature-card .icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  background: hsl(var(--primary) / 0.15);
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+.page-content .feature-card h3 {
+  margin: 0.25rem 0 0.5rem;
+  font-size: 1.25rem;
+}
+.page-content .feature-card p {
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+}
+
+/* Steps ----------------------------------------------------------------- */
+.page-content .steps {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 2rem;
+}
+.page-content .step .num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  border: 1px solid hsl(var(--primary) / 0.4);
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+.page-content .step h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
+.page-content .step p {
+  color: hsl(var(--muted-foreground));
+  margin: 0;
+}
+
+/* Call-to-action box ---------------------------------------------------- */
+.page-content .cta-box {
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  border-radius: 1.5rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+.page-content .cta-box .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  background: hsl(var(--primary) / 0.15);
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+/* Emergency cards ------------------------------------------------------- */
+.page-content .emergency-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 1.5rem;
+}
+.page-content .emergency-card {
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--card));
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+.page-content .emergency-card .num {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: hsl(var(--foreground));
+}
+.page-content .emergency-card p {
+  color: hsl(var(--muted-foreground));
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+}
+.page-content .emergency-card.red {
+  border-color: hsl(0 72% 51% / 0.45);
+  background: hsl(0 72% 51% / 0.07);
+}
+.page-content .emergency-card.red .num {
+  color: hsl(0 72% 62%);
+}
+.page-content .emergency-card.orange {
+  border-color: hsl(var(--primary) / 0.45);
+  background: hsl(var(--primary) / 0.07);
+}
+.page-content .emergency-card.orange .num {
+  color: hsl(var(--primary));
+}
+
+/* Responsive ------------------------------------------------------------ */
+@media (max-width: 768px) {
+  .page-content .feature-grid,
+  .page-content .steps,
+  .page-content .emergency-grid {
+    grid-template-columns: 1fr;
+  }
+}

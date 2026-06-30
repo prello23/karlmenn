@@ -58,3 +58,34 @@ export async function DbPageContent({
     </>
   );
 }
+
+/**
+ * Renders a page entirely from its stored HTML (no separate hero banner) — the
+ * full visual design lives in the DB `content` and is rendered with the shared
+ * `.page-content` styles, so the admin editor is a true WYSIWYG of this page.
+ */
+export async function DbPageFull({
+  slug,
+  fallbackTitle,
+}: {
+  slug: string;
+  fallbackTitle?: string;
+}) {
+  const page = await getPage(slug);
+  const content = page?.content?.trim();
+
+  if (!content) {
+    return <PageHero title={page?.menuTitle || fallbackTitle || ""} />;
+  }
+
+  return (
+    <section className="py-8 sm:py-10">
+      <div className="container">
+        <div
+          className="page-content mx-auto max-w-5xl"
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+      </div>
+    </section>
+  );
+}

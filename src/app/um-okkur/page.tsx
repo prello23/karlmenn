@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { DbPageContent, getPageMetadata } from "@/components/db-page";
+import { DbPageFull, getPageMetadata } from "@/components/db-page";
 
 export const dynamic = "force-dynamic";
 
@@ -13,12 +13,5 @@ export function generateMetadata(): Promise<Metadata> {
 }
 
 export default function AboutPage() {
-  return (
-    <DbPageContent
-      slug="um-okkur"
-      eyebrow="Um verkefnið"
-      fallbackTitle="Um okkur"
-      fallbackDescription="Samfélag og stuðningsvettvangur fyrir karlmenn."
-    />
-  );
+  return <DbPageFull slug="um-okkur" fallbackTitle="Um okkur" />;
 }

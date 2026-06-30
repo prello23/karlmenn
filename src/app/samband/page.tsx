@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { DbPageContent, getPageMetadata } from "@/components/db-page";
+import { DbPageFull, getPageMetadata } from "@/components/db-page";
 import { Card, CardContent } from "@/components/ui/card";
 import { ContactForm } from "@/components/contact-form";
 
@@ -16,13 +16,7 @@ export function generateMetadata(): Promise<Metadata> {
 export default function ContactPage() {
   return (
     <>
-      <DbPageContent
-        slug="samband"
-        eyebrow="Samband"
-        fallbackTitle="Hafðu samband"
-        fallbackDescription="Spurningar, ábendingar eða viltu leggja verkefninu lið? Sendu okkur línu."
-      />
-
+      <DbPageFull slug="samband" fallbackTitle="Hafðu samband" />
       <section className="pb-16">
         <div className="container max-w-xl">
           <Card>
