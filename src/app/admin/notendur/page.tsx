@@ -19,6 +19,63 @@ function ApprovalBadge({ status }: { status: string }) {
   return <Badge variant="outline">Bíður</Badge>;
 }
 
+/** Builds a human-readable tooltip from the stored assessment JSON. */
+function assessmentTooltip(score: number | null, details: string | null): string {
+  const lines: string[] = [];
+  if (score != null) lines.push(`Skor: ${(score * 100).toFixed(0)}% líklega karl`);
+  if (details) {
+    try {
+      const d = JSON.parse(details);
+      const reasons: string[] = d?.heuristic?.reasons ?? [];
+      lines.push(...reasons);
+      if (d?.ai?.reasoning) lines.push(`AI: ${d.ai.reasoning}`);
+    } catch {
+      /* ignore malformed JSON */
+    }
+  }
+  return lines.join("\n");
+}
+
+function GenderBadge({
+  assessment,
+  score,
+  details,
+}: {
+  assessment: string;
+  score: number | null;
+  details: string | null;
+}) {
+  const tooltip = assessmentTooltip(score, details);
+  const pct = score != null ? ` ${(score * 100).toFixed(0)}%` : "";
+  const map: Record<string, { emoji: string; label: string; cls: string }> = {
+    LIKELY_MALE: {
+      emoji: "🟢",
+      label: "Líklega karl",
+      cls: "border-success/40 bg-success/10 text-success",
+    },
+    LIKELY_FEMALE: {
+      emoji: "🔴",
+      label: "Líklega kona",
+      cls: "border-destructive/40 bg-destructive/10 text-destructive",
+    },
+    UNCERTAIN: {
+      emoji: "🟡",
+      label: "Óviss",
+      cls: "border-border bg-surface text-muted-foreground",
+    },
+  };
+  const m = map[assessment] ?? map.UNCERTAIN;
+  return (
+    <span
+      title={tooltip || undefined}
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${m.cls}`}
+    >
+      {m.emoji} {m.label}
+      {pct}
+    </span>
+  );
+}
+
 export default async function AdminUsersPage() {
   const [pending, users] = await Promise.all([
     prisma.user
@@ -63,10 +120,18 @@ export default async function AdminUsersPage() {
                 className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card p-4"
               >
                 <div className="min-w-0">
-                  <p className="font-medium">{u.email}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium">{u.name || u.email}</p>
+                    <GenderBadge
+                      assessment={u.genderAssessment}
+                      score={u.genderAssessmentScore}
+                      details={u.genderAssessmentDetails}
+                    />
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    {u.displayName ? `${u.displayName} · ` : ""}
-                    Skráði sig {formatDate(u.createdAt)}
+                    {u.email}
+                    {u.displayName ? ` · ${u.displayName}` : ""} · Skráði sig{" "}
+                    {formatDate(u.createdAt)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -95,7 +160,9 @@ export default async function AdminUsersPage() {
         <table className="w-full min-w-[720px] text-sm">
           <thead className="bg-surface/50 text-left text-muted-foreground">
             <tr>
+              <th className="px-4 py-3 font-medium">Nafn</th>
               <th className="px-4 py-3 font-medium">Netfang</th>
+              <th className="px-4 py-3 font-medium">Kyn (mat)</th>
               <th className="px-4 py-3 font-medium">Gælunafn</th>
               <th className="px-4 py-3 font-medium">Staðfest</th>
               <th className="px-4 py-3 font-medium">Staða</th>
@@ -107,14 +174,22 @@ export default async function AdminUsersPage() {
           <tbody>
             {users.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                <td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">
                   Engir notendur.
                 </td>
               </tr>
             ) : (
               users.map((u) => (
                 <tr key={u.id} className="border-t border-border">
-                  <td className="px-4 py-3 font-medium">{u.email}</td>
+                  <td className="px-4 py-3 font-medium">{u.name || "—"}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
+                  <td className="px-4 py-3">
+                    <GenderBadge
+                      assessment={u.genderAssessment}
+                      score={u.genderAssessmentScore}
+                      details={u.genderAssessmentDetails}
+                    />
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {u.displayName ?? "—"}
                   </td>

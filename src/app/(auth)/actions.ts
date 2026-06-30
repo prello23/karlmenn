@@ -12,6 +12,7 @@ import { registerUser, resendVerification } from "@/lib/account";
 
 const signUpSchema = z
   .object({
+    name: z.string().trim().min(2, "Sláðu inn nafn (a.m.k. 2 stafir)").max(120),
     email: z.string().trim().email("Ógilt netfang"),
     displayName: z.string().trim().max(40).optional(),
     password: z.string().min(8, "Lykilorð þarf að vera a.m.k. 8 stafir"),
@@ -31,6 +32,7 @@ export async function signUpAction(
   formData: FormData,
 ): Promise<SignUpState> {
   const parsed = signUpSchema.safeParse({
+    name: formData.get("name"),
     email: formData.get("email"),
     displayName: formData.get("displayName") || undefined,
     password: formData.get("password"),
@@ -42,6 +44,7 @@ export async function signUpAction(
   }
 
   const result = await registerUser({
+    name: parsed.data.name,
     email: parsed.data.email,
     password: parsed.data.password,
     displayName: parsed.data.displayName,

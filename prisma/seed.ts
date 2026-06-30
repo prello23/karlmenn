@@ -126,11 +126,13 @@ async function main() {
     create: {
       email: adminEmail,
       passwordHash,
+      name: "Umsjón EkkiEinn",
       displayName: "Umsjón",
       role: "ADMIN",
       emailVerified: true,
       approvalStatus: "APPROVED",
       isAnonymous: false,
+      genderAssessment: "LIKELY_MALE",
     },
   });
   console.log(`Admin user: ${adminEmail} (password: ${adminPassword})`);

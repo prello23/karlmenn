@@ -35,6 +35,14 @@ enum SupportStatus {
   CLOSED
 }
 
+// Heuristic + AI assessment of whether a registrant is likely male. EkkiEinn.is
+// is a men's support community, so this assists admin approval decisions.
+enum GenderAssessment {
+  LIKELY_MALE
+  LIKELY_FEMALE
+  UNCERTAIN
+}
+
 // ---- Users -----------------------------------------------------------------
 
 model User {
@@ -42,6 +50,8 @@ model User {
   email        String   @unique
   passwordHash String?
   username     String?  @unique
+  // Full legal name collected at registration (required for new sign-ups).
+  name         String   @default("")
   displayName  String?
   image        String?
   isAnonymous  Boolean  @default(true)
@@ -49,6 +59,11 @@ model User {
 
   // Admin must approve new (non-admin) users before they can sign in.
   approvalStatus ApprovalStatus @default(PENDING_APPROVAL)
+
+  // Gender assessment (heuristic + optional AI) used to assist approval.
+  genderAssessment        GenderAssessment @default(UNCERTAIN)
+  genderAssessmentScore   Float?
+  genderAssessmentDetails String?
 
   // Email verification (custom flow — single-use token, 48h expiry).
   emailVerified  Boolean   @default(false)

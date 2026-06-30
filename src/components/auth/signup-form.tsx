@@ -30,6 +30,18 @@ export function SignupForm() {
   return (
     <form action={formAction} className="space-y-4">
       <div className="grid gap-2">
+        <Label htmlFor="name">Nafn</Label>
+        <Input
+          id="name"
+          name="name"
+          type="text"
+          autoComplete="name"
+          placeholder="Fullt nafn"
+          required
+          minLength={2}
+        />
+      </div>
+      <div className="grid gap-2">
         <Label htmlFor="email">Netfang</Label>
         <Input id="email" name="email" type="email" autoComplete="email" required />
       </div>

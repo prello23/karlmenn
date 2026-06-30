@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail, sendAdminNotification } from "@/lib/email";
 import { APP_URL } from "@/lib/content";
+import { assessGender } from "@/lib/gender-assess";
 
 const TOKEN_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
 
@@ -22,11 +23,13 @@ export type SignUpResult =
   | { ok: false; error: string };
 
 export async function registerUser(input: {
+  name: string;
   email: string;
   password: string;
   displayName?: string;
 }): Promise<SignUpResult> {
   const email = input.email.trim().toLowerCase();
+  const name = input.name.trim();
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -36,14 +39,28 @@ export async function registerUser(input: {
   const passwordHash = await bcrypt.hash(input.password, 10);
   const token = newToken();
 
+  // Gender assessment (heuristic + optional AI). Best-effort: never block
+  // registration on an assessment failure.
+  const assessment = await assessGender(name, email).catch(() => null);
+
+  // Auto-approval: only confident-male assessments skip manual review.
+  // Everyone else (female / low score / uncertain) is held for an admin.
+  const autoApprove =
+    assessment?.assessment === "LIKELY_MALE" && assessment.score >= 0.8;
+
   await prisma.user.create({
     data: {
+      name,
       email,
       passwordHash,
       displayName: input.displayName?.trim() || null,
       emailVerified: false,
       verifyToken: token,
       verifyTokenExp: new Date(Date.now() + TOKEN_TTL_MS),
+      approvalStatus: autoApprove ? "APPROVED" : "PENDING_APPROVAL",
+      genderAssessment: assessment?.assessment ?? "UNCERTAIN",
+      genderAssessmentScore: assessment?.score ?? null,
+      genderAssessmentDetails: assessment?.details ?? null,
     },
   });
 
