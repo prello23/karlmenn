@@ -1,118 +1,121 @@
-# EkkiEinn.is — Content Moderation ADDENDUM (CRITICAL)
+# EkkiEinn.is — Content Moderation ADDENDUM (CRITICAL UPDATE v2)
 
-## ⚠️ IMPORTANT CHANGES TO MODERATION FLOW
+## ⚠️ THIS OVERRIDES AND CLARIFIES PARTS OF EKKIEINN-CONTENT-MODERATION.md
 
-This overrides/clarifies parts of `EKKIEINN-CONTENT-MODERATION.md`.
+Read EKKIEINN-CONTENT-MODERATION.md first, then apply these changes.
 
-### 1. ALL threads require approval before being visible
+---
 
-**NO thread may be visible to anyone except the author and admins until approved.**
+## 1. THREADS MUST NOT BE VISIBLE WITHOUT APPROVAL
 
-- When a user creates a thread, it goes to `status: "pending"` state
-- The thread list (`/samfelag`) must ONLY show threads with `status: "approved"`
-- The author can see their own pending/rejected threads (with a status badge)
-- Admins can see all threads in `/admin/threads`
+**DEFAULT STATE**: Every new thread has `status = "pending"`. 
 
-### 2. AI Auto-Moderation Flow
+**Public thread list** (`/thraedir` or main forum page): ONLY show threads with `status = "approved"`.
 
-When a thread is created:
-1. AI (GPT or heuristic) scans the content for:
-   - **Names** (Icelandic names including ALL declension forms: Jóhanna, Jóhönnu, Jóhönnu, etc.)
-   - **Hate speech** or offensive content
-   - **Personal information** (phone numbers, kennitala, addresses)
-2. If content is **clean** → `status: "approved"` automatically, thread becomes visible
-3. If content has **issues** → `status: "pending_review"`, thread stays hidden from public
+**The user who posted** sees their own threads with status badges:
+- 🟡 **Bíður samþykktar** — pending
+- 🟢 **Samþykkt** — approved (visible to all)
+- 🔴 **Hafnað** — rejected (only poster sees it)
 
-### 3. Name Detection MUST catch declensions
+**AI auto-approval flow**:
+1. User submits thread
+2. AI checks content (names, hate speech, personal info)
+3. If content is CLEAN → auto-approve → `status = "approved"` → visible immediately
+4. If content has issues → `status = "pending"` → admin must review
 
-The current system finds "Jóhanna" but NOT "Jóhönnu" (dative/genitive form).
+---
 
-**Fix**: The `icelandic-names.ts` database MUST include common declension forms:
-- Jóhanna → Jóhönnu, Jóhönnu (all cases)
+## 2. NAME REPLACEMENT — "Tillaga" (Suggestion)
+
+When AI detects a name in thread content:
+- Thread stays `status = "pending"` (NOT visible to public)
+- Show the poster a **"Tillaga"** (suggestion) section below their thread text
+- The suggestion shows the SAME text but with detected names replaced with `[Nafn]`
+- Example: "Ég var með Jóhönnu í bílnum" → "Ég var með [Nafn] í bílnum"
+- The poster can:
+  - **Accept suggestion** → text is updated, AI re-checks, if clean → auto-approve
+  - **Edit manually** → poster rewrites, AI re-checks, if clean → auto-approve
+  - **Do nothing** → stays pending for admin review
+
+The suggestion appears as a clearly styled box below the original text:
+```
+📝 Tillaga — nafn fannst í textanum:
+"Ég var með [Nafn] í bílnum og..."
+[Samþykkja tillögu]  [Breyta sjálf/ur]
+```
+
+---
+
+## 3. NAME DETECTION MUST CATCH DECLENSIONS
+
+Icelandic names change form (declensions). The name database must include ALL forms:
+- Jóhanna → Jóhönnu (accusative/dative), Jóhönnu (genitive)
 - Guðrún → Guðrúnar, Guðrúnu
 - Sigríður → Sigríði, Sigríðar
-- etc.
+- Gunnar → Gunnari, Gunnars
+- Páll → Páli, Páls
 
-For each name, generate at least nominative + genitive + dative + accusative forms.
+Use **stem matching**: strip common Icelandic suffixes (-ar, -i, -s, -u, -ur, -a) and compare stems.
+Also do **fuzzy match** against the full declension database.
 
-Also use regex pattern matching: if "Jóhann" is a known name root, match any word starting with "Jóhann" (Jóhanna, Jóhönnu, Jóhannes, etc.)
+---
 
-### 4. User-Facing Thread Status
+## 4. EMAIL-BASED GENDER LOOKUP FOR REGISTRATION
 
-On the user's own thread page and in the thread list (for author only), show:
+When a new user registers, check their gender via MULTIPLE signals:
 
-- 🟡 **"Bíður samþykktar"** — Thread is pending review
-- 🟢 **"Samþykkt og birt"** — Thread is approved and visible
-- 🔴 **"Hafnað — vinsamlegast breyttu texta"** — Thread was rejected
+### a) Name analysis (already in CONTENT-MODERATION spec)
+Use the Icelandic name database to check if the provided name is male/female.
 
-### 5. Suggestion UI (for author)
+### b) Email-based name extraction + genderize.io
+1. Extract the name part from the email address:
+   - `johanna.sigurdsdottir@gmail.com` → "johanna sigurdsdottir"
+   - `gunnar85@hotmail.com` → "gunnar"
+   - `g.palsson@company.is` → skip (too short)
+2. Send extracted first name to `https://api.genderize.io/?name={name}`
+3. API returns: `{ "name": "gunnar", "gender": "male", "probability": 0.97, "count": 1234 }`
+4. Use this as an ADDITIONAL signal alongside the Icelandic name database
 
-When AI finds issues, the author sees at the bottom of their thread:
+### c) Combined scoring
+- Icelandic name DB says male (weight: 60%)
+- genderize.io says male (weight: 30%)  
+- Email name extraction says male (weight: 10%)
+- If combined score > admin threshold → auto-approve registration
+- If score is borderline → pending for admin review
 
-```
-━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️ TILLAGA FRÁ KERFI
+### d) Admin settings
+- Admin can set the **auto-approve threshold** (default: 70%)
+- Admin can see the breakdown: "Nafn: 90% karl | Email: 85% karl | Heildar: 88%"
 
-Nöfn fundust í textanum og þurfa að vera fjarlægð áður en þráður birtist.
+---
 
-Fundin nöfn: Jóhanna → [Nafn], Jóhönnu → [Nafn]
+## 5. HATE SPEECH / BANNED CONTENT
 
-[Samþykkja tillögu]  [Breyta handvirkt]
-━━━━━━━━━━━━━━━━━━━━━━━━
-```
+Check thread content for:
+- **Names** (Icelandic name DB + declensions)
+- **Hate speech** keywords (maintain a list in admin settings)
+- **Personal info** (kennitala patterns: 6+4 digits, phone numbers, addresses)
+- **Offensive language** targeting individuals
 
-- **"Samþykkja tillögu"** → Replaces all found names with `[Nafn]`, resubmits for AI check
-- **"Breyta handvirkt"** → Opens edit form where user can change text themselves
-- After edit/accept → AI checks again → if clean → auto-approve
+If ANY of these are detected → `status = "pending"` + show poster what was flagged.
 
-### 6. The "TILLAGA" section
+---
 
-The suggestion section (shown in IMG_6161.png) already exists but needs fixes:
-- The **original text with names MUST NOT be visible** to anyone except the author
-- Public visitors see NOTHING until the thread is approved
-- Only the author sees the original + suggestion side by side
-- Replace `[AAA]` placeholder with `[Nafn]` (more meaningful in Icelandic)
+## 6. ADMIN THREAD REVIEW PAGE
 
-### 7. Admin thread moderation
+`/admin/threads` must show:
+- Filter by status: All | Pending | Approved | Rejected
+- Each thread shows: title, poster, date, status badge, AI analysis result
+- Click to open → see full text with flagged items highlighted
+- Actions: **Samþykkja** (approve) | **Hafna** (reject) | **Breyta** (edit then approve)
+- If thread has AI suggestion, show it alongside original
 
-In `/admin/threads`, admin sees:
-- All threads with status column (Pending/Approved/Rejected/Hidden)
-- Can click to view full thread
-- Buttons: **Samþykkja** (approve), **Hafna** (reject with optional message), **Fela** (hide)
-- Admin can edit thread content directly if needed
+---
 
-### 8. Database changes
+## IMPLEMENTATION PRIORITY
 
-Add to Thread model if not already present:
-```prisma
-model Thread {
-  // ... existing fields
-  status        String   @default("pending") // "pending", "pending_review", "approved", "rejected", "hidden"
-  moderationNote String? // AI or admin note about why rejected
-  aiSuggestion  String?  // AI-suggested cleaned version
-  foundNames    String?  // JSON array of found names
-}
-```
-
-### 9. Thread list filtering
-
-```typescript
-// Public thread list - ONLY approved
-where: { status: "approved", isHidden: false }
-
-// Author's own threads - show all with status
-where: { OR: [{ status: "approved" }, { authorId: currentUser.id }] }
-
-// Admin - show all
-where: {} // no filter
-```
-
-### 10. Declension matching strategy
-
-Instead of exact matching only, use this approach:
-1. Build a stem map: extract the first 4-6 chars of each known name as a "stem"
-2. Match any word that starts with a known stem AND has a common Icelandic suffix
-3. Common suffixes: -u, -ar, -i, -a, -s, -nu, -ni, -nar, -nni, -nnar
-4. Example: stem "Jóhann" matches: Jóhanna, Jóhönnu, Jóhannes, Jóhanni, Jóhanns
-
-This catches virtually all declension forms without needing a complete declension database.
+1. Thread status field + public filtering (ONLY approved visible)
+2. AI content check on submit (names, hate, personal info)
+3. Suggestion UI for poster (name replacement)
+4. Admin review page improvements
+5. genderize.io integration for registration
