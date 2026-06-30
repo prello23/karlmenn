@@ -3,6 +3,7 @@ export const MAIN_NAV = [
   { href: "/studningur", label: "Stuðningur" },
   { href: "/um-okkur", label: "Um okkur" },
   { href: "/neydarhjalp", label: "Neyðarhjálp" },
+  { href: "/styrkja", label: "Styrktu okkur" },
 ] as const;
 
 export const FOOTER_NAV = {
@@ -13,7 +14,7 @@ export const FOOTER_NAV = {
   ],
   Verkefnið: [
     { href: "/um-okkur", label: "Um okkur" },
-    { href: "/dona", label: "Styrkja" },
+    { href: "/styrkja", label: "Styrktu okkur" },
     { href: "/samband", label: "Samband" },
   ],
   Lögfræðilegt: [

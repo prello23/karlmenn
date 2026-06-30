@@ -97,6 +97,66 @@ async function main() {
   }
   console.log(`Seeded ${SETTINGS.length} settings`);
 
+  // Editable static pages
+  const PAGES = [
+    {
+      slug: "forsida",
+      title: "EkkiEinn.is — Þú ert ekki einn",
+      menuTitle: "Forsíða",
+      metaDescription: "Samfélag og stuðningur fyrir karlmenn.",
+    },
+    {
+      slug: "studningur",
+      title: "Stuðningur — EkkiEinn.is",
+      menuTitle: "Stuðningur",
+      metaDescription: "",
+    },
+    {
+      slug: "um-okkur",
+      title: "Um okkur — EkkiEinn.is",
+      menuTitle: "Um okkur",
+      metaDescription: "",
+    },
+    {
+      slug: "styrkja",
+      title: "Styrktu EkkiEinn.is",
+      menuTitle: "Styrktu okkur",
+      metaDescription: "",
+    },
+    {
+      slug: "neydarhjalp",
+      title: "Neyðarhjálp — EkkiEinn.is",
+      menuTitle: "Neyðarhjálp",
+      metaDescription: "",
+    },
+    {
+      slug: "samband",
+      title: "Samband — EkkiEinn.is",
+      menuTitle: "Samband",
+      metaDescription: "",
+    },
+    {
+      slug: "personuvernd",
+      title: "Persónuvernd — EkkiEinn.is",
+      menuTitle: "Persónuvernd",
+      metaDescription: "",
+    },
+    {
+      slug: "skilmalar",
+      title: "Skilmálar — EkkiEinn.is",
+      menuTitle: "Skilmálar",
+      metaDescription: "",
+    },
+  ];
+  for (const page of PAGES) {
+    await prisma.page.upsert({
+      where: { slug: page.slug },
+      update: {},
+      create: { ...page, content: "" },
+    });
+  }
+  console.log(`Seeded ${PAGES.length} pages`);
+
   // Admin user
   const adminEmail = (process.env.ADMIN_EMAIL ?? "admin@ekkieinn.is").toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD ?? "ekkieinn-admin";

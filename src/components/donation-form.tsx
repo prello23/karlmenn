@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useFormState } from "react-dom";
 
-import { createCheckout, type DonationState } from "@/app/dona/actions";
+import { createCheckout, type DonationState } from "@/app/styrkja/actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/forum/submit-button";

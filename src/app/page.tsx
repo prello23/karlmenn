@@ -158,7 +158,7 @@ export default function HomePage() {
               </p>
               <div className="mt-8">
                 <Button asChild size="lg">
-                  <Link href="/dona">
+                  <Link href="/styrkja">
                     <Heart className="h-4 w-4" />
                     Styðja verkefnið
                   </Link>

@@ -85,3 +85,34 @@
     background-size: 22px 22px;
   }
 }
+
+/* react-simple-wysiwyg — dark theme to match the admin UI */
+.rsw-wrap .rsw-editor {
+  border: 1px solid hsl(var(--input));
+  border-radius: 0.5rem;
+  background: hsl(var(--surface));
+  color: hsl(var(--foreground));
+  overflow: hidden;
+}
+.rsw-wrap .rsw-toolbar {
+  background: hsl(var(--card));
+  border-bottom: 1px solid hsl(var(--border));
+}
+.rsw-wrap .rsw-btn {
+  color: hsl(var(--foreground));
+  background: transparent;
+}
+.rsw-wrap .rsw-btn:hover,
+.rsw-wrap .rsw-btn[data-active="true"] {
+  background: hsl(var(--secondary));
+}
+.rsw-wrap .rsw-ce {
+  min-height: 240px;
+  color: hsl(var(--foreground));
+}
+.rsw-wrap .rsw-ce:focus {
+  outline: none;
+}
+.rsw-wrap .rsw-separator {
+  border-left: 1px solid hsl(var(--border));
+}

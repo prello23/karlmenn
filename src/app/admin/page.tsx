@@ -62,7 +62,7 @@ export default async function AdminDashboard() {
     <div>
       <h1 className="text-3xl font-bold tracking-tight">Yfirlit</h1>
       <p className="mt-2 text-muted-foreground">
-        Stjórnborð ekkieinn.is.
+        Stjórnborð EkkiEinn.is.
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

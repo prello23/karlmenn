@@ -9,6 +9,12 @@ const nextConfig = {
       bodySizeLimit: "2mb",
     },
   },
+  async redirects() {
+    return [
+      { source: "/dona", destination: "/styrkja", permanent: true },
+      { source: "/dona/takk", destination: "/styrkja/takk", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

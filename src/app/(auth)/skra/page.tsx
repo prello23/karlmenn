@@ -6,7 +6,7 @@ import { SignupForm } from "@/components/auth/signup-form";
 
 export const metadata: Metadata = {
   title: "Skrá mig",
-  description: "Stofnaðu aðgang að samfélaginu á ekkieinn.is.",
+  description: "Stofnaðu aðgang að samfélaginu á EkkiEinn.is.",
 };
 
 export default function SignUpPage() {

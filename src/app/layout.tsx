@@ -62,7 +62,7 @@ export default function RootLayout({
           data-cfasync="false"
           src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js"
           data-id="ekkieinn"
-          data-description="Styðja ekkieinn.is"
+          data-description="Styðja EkkiEinn.is"
           data-message="Ef þér líst vel á þennan vettvang, gefðu okkur stuðning!"
           data-color="#1a56db"
           data-position="Right"

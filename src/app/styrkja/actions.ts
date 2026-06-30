@@ -42,19 +42,19 @@ export async function createCheckout(
   try {
     const session = await stripe.checkout.sessions.create({
       mode: recurring ? "subscription" : "payment",
-      success_url: `${siteUrl}/dona/takk`,
-      cancel_url: `${siteUrl}/dona`,
+      success_url: `${siteUrl}/styrkja/takk`,
+      cancel_url: `${siteUrl}/styrkja`,
       line_items: [
         {
           quantity: 1,
           price_data: {
             currency: "isk",
-            unit_amount: amount,
+            unit_amount: amount * 100,
             recurring: recurring ? { interval: "month" } : undefined,
             product_data: {
               name: recurring
-                ? "Mánaðarlegt framlag til ekkieinn.is"
-                : "Framlag til ekkieinn.is",
+                ? "Mánaðarlegt framlag til EkkiEinn.is"
+                : "Framlag til EkkiEinn.is",
             },
           },
         },

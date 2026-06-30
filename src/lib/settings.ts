@@ -10,7 +10,7 @@ export const SETTING_DEFAULTS = {
   verify_email_subject: "Staðfestu netfangið þitt hjá Ekki einn",
   verify_email_body: `Halló,
 
-Þú ert að skrá þig á ekkieinn.is — samfélag og stuðningsvettvangur.
+Þú ert að skrá þig á EkkiEinn.is — samfélag og stuðningsvettvangur.
 
 Smelltu á linkinn hér að neðan til að staðfesta netfangið þitt:
 
@@ -25,7 +25,7 @@ Teymið hjá Ekki einn`,
   // ---- Almennt ----
   site_tagline: "Samfélag og stuðningur fyrir karlmenn",
   about_text:
-    "ekkieinn.is er vettvangur fyrir karlmenn sem hafa orðið fyrir ofbeldi, rangar sakir eða misnotkun.",
+    "EkkiEinn.is er vettvangur fyrir karlmenn sem hafa orðið fyrir ofbeldi, rangar sakir eða misnotkun.",
   contact_email: "info@ekkieinn.is",
 
   // ---- Skráning ----

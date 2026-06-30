@@ -169,3 +169,16 @@ model Setting {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+// ---- Editable static pages (managed in /admin/pages) -----------------------
+
+model Page {
+  id              Int      @id @default(autoincrement())
+  slug            String   @unique // t.d. "forsida", "um-okkur", "studningur"
+  title           String // Titill síðu (birtist í vafraflipa)
+  menuTitle       String // Heiti í valmynd
+  metaDescription String   @default("")
+  content         String   @default("") // HTML content
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+}

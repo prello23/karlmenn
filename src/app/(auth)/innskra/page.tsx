@@ -6,7 +6,7 @@ import { LoginForm } from "@/components/auth/login-form";
 
 export const metadata: Metadata = {
   title: "Innskrá",
-  description: "Skráðu þig inn á ekkieinn.is.",
+  description: "Skráðu þig inn á EkkiEinn.is.",
 };
 
 export default async function LoginPage({

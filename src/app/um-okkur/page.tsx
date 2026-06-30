@@ -94,7 +94,7 @@ export default function AboutPage() {
                   <Link href="/skra">Vertu með</Link>
                 </Button>
                 <Button asChild variant="outline">
-                  <Link href="/dona">Styðja verkefnið</Link>
+                  <Link href="/styrkja">Styðja verkefnið</Link>
                 </Button>
               </div>
             </div>

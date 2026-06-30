@@ -5,6 +5,7 @@ import {
   Users,
   FolderTree,
   Settings,
+  FileText,
   Home,
 } from "lucide-react";
 
@@ -12,6 +13,7 @@ import { requireAdmin } from "@/lib/auth-helpers";
 
 const ADMIN_NAV = [
   { href: "/admin", label: "Yfirlit", icon: LayoutDashboard },
+  { href: "/admin/pages", label: "Síður (texti)", icon: FileText },
   { href: "/admin/threads", label: "Þræðir", icon: MessagesSquare },
   { href: "/admin/notendur", label: "Notendur", icon: Users },
   { href: "/admin/flokkar", label: "Flokkar", icon: FolderTree },

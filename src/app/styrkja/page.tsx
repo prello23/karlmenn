@@ -8,7 +8,7 @@ import { DonationForm } from "@/components/donation-form";
 export const metadata: Metadata = {
   title: "Styrkja",
   description:
-    "Framlög til ekkieinn.is fara beint í lögfræðilega og sálfræðilega aðstoð fyrir karlmenn. Eitt skipti eða mánaðarlega, nafnlaust ef þú vilt.",
+    "Framlög til EkkiEinn.is fara beint í lögfræðilega og sálfræðilega aðstoð fyrir karlmenn. Eitt skipti eða mánaðarlega, nafnlaust ef þú vilt.",
 };
 
 const ALLOCATION = [

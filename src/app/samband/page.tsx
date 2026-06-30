@@ -8,7 +8,7 @@ import { SITE } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "Samband",
-  description: "Hafðu samband við teymið á bak við ekkieinn.is.",
+  description: "Hafðu samband við teymið á bak við EkkiEinn.is.",
 };
 
 export default function ContactPage() {

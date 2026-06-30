@@ -6,7 +6,7 @@ import { SITE } from "@/lib/content";
 
 export const metadata: Metadata = {
   title: "Persónuvernd",
-  description: "Persónuverndarstefna ekkieinn.is — hvernig við meðhöndlum gögn.",
+  description: "Persónuverndarstefna EkkiEinn.is — hvernig við meðhöndlum gögn.",
 };
 
 export default function PrivacyPage() {
