@@ -2,19 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ExternalLink, Loader2, Trash2, ArrowLeft } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-
-// react-simple-wysiwyg touches the DOM, so load it client-side only.
-const Editor = dynamic(
-  () => import("react-simple-wysiwyg").then((m) => m.DefaultEditor),
-  { ssr: false, loading: () => <div className="h-48 rounded-lg border border-input bg-surface" /> },
-);
+import { TipTapEditor } from "@/components/admin/tiptap-editor";
 
 type PageData = {
   id: number;
@@ -193,12 +187,7 @@ export function PageEditor({ page }: { page?: PageData }) {
 
         <div className="grid gap-2">
           <Label>Efni síðunnar</Label>
-          <div className="rsw-wrap">
-            <Editor
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-            />
-          </div>
+          <TipTapEditor value={content} onChange={setContent} />
         </div>
       </div>
 
