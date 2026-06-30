@@ -51,6 +51,11 @@ export const authConfig: NextAuthConfig = {
           return null;
         }
 
+        // Record the successful sign-in (best-effort — never block login).
+        await prisma.user
+          .update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
+          .catch(() => {});
+
         return {
           id: user.id,
           email: user.email,

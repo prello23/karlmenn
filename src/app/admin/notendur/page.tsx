@@ -1,80 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  updateUserRole,
-  deleteUser,
-  approveUser,
-  rejectUser,
-} from "@/app/admin/actions";
+import { approveUser, rejectUser } from "@/app/admin/actions";
 import { formatDate } from "@/lib/utils";
+import { GenderBadge } from "@/components/admin/gender-badge";
+import { UsersTable, type AdminUserRow } from "@/components/admin/users-table";
 
 export const dynamic = "force-dynamic";
-
-const ROLES = ["USER", "MODERATOR", "ADMIN"] as const;
-
-function ApprovalBadge({ status }: { status: string }) {
-  if (status === "APPROVED") return <Badge variant="success">Samþykkt</Badge>;
-  if (status === "REJECTED") return <Badge variant="destructive">Hafnað</Badge>;
-  return <Badge variant="outline">Bíður</Badge>;
-}
-
-/** Builds a human-readable tooltip from the stored assessment JSON. */
-function assessmentTooltip(score: number | null, details: string | null): string {
-  const lines: string[] = [];
-  if (score != null) lines.push(`Skor: ${(score * 100).toFixed(0)}% líklega karl`);
-  if (details) {
-    try {
-      const d = JSON.parse(details);
-      const reasons: string[] = d?.heuristic?.reasons ?? [];
-      lines.push(...reasons);
-      if (d?.ai?.reasoning) lines.push(`AI: ${d.ai.reasoning}`);
-    } catch {
-      /* ignore malformed JSON */
-    }
-  }
-  return lines.join("\n");
-}
-
-function GenderBadge({
-  assessment,
-  score,
-  details,
-}: {
-  assessment: string;
-  score: number | null;
-  details: string | null;
-}) {
-  const tooltip = assessmentTooltip(score, details);
-  const pct = score != null ? ` ${(score * 100).toFixed(0)}%` : "";
-  const map: Record<string, { emoji: string; label: string; cls: string }> = {
-    LIKELY_MALE: {
-      emoji: "🟢",
-      label: "Líklega karl",
-      cls: "border-success/40 bg-success/10 text-success",
-    },
-    LIKELY_FEMALE: {
-      emoji: "🔴",
-      label: "Líklega kona",
-      cls: "border-destructive/40 bg-destructive/10 text-destructive",
-    },
-    UNCERTAIN: {
-      emoji: "🟡",
-      label: "Óviss",
-      cls: "border-border bg-surface text-muted-foreground",
-    },
-  };
-  const m = map[assessment] ?? map.UNCERTAIN;
-  return (
-    <span
-      title={tooltip || undefined}
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${m.cls}`}
-    >
-      {m.emoji} {m.label}
-      {pct}
-    </span>
-  );
-}
 
 export default async function AdminUsersPage() {
   const [pending, users] = await Promise.all([
@@ -87,11 +19,27 @@ export default async function AdminUsersPage() {
     prisma.user
       .findMany({
         orderBy: { createdAt: "desc" },
-        take: 200,
+        take: 500,
         include: { _count: { select: { threads: true, replies: true } } },
       })
       .catch(() => []),
   ]);
+
+  // Serialize to a plain shape for the client table (dates → ISO strings).
+  const rows: AdminUserRow[] = users.map((u) => ({
+    id: u.id,
+    name: u.name,
+    displayName: u.displayName,
+    email: u.email,
+    role: u.role,
+    approvalStatus: u.approvalStatus,
+    emailVerified: u.emailVerified,
+    createdAt: u.createdAt.toISOString(),
+    lastLoginAt: u.lastLoginAt ? u.lastLoginAt.toISOString() : null,
+    genderAssessment: u.genderAssessment,
+    genderAssessmentScore: u.genderAssessmentScore,
+    postCount: u._count.threads + u._count.replies,
+  }));
 
   return (
     <div>
@@ -121,7 +69,12 @@ export default async function AdminUsersPage() {
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium">{u.name || u.email}</p>
+                    <a
+                      href={`/admin/notendur/${u.id}`}
+                      className="font-medium hover:text-primary hover:underline"
+                    >
+                      {u.name || u.email}
+                    </a>
                     <GenderBadge
                       assessment={u.genderAssessment}
                       score={u.genderAssessmentScore}
@@ -156,97 +109,7 @@ export default async function AdminUsersPage() {
 
       {/* All users */}
       <h2 className="mt-10 text-xl font-semibold">Allir notendur</h2>
-      <div className="mt-4 overflow-x-auto rounded-xl border border-border">
-        <table className="w-full min-w-[720px] text-sm">
-          <thead className="bg-surface/50 text-left text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-medium">Nafn</th>
-              <th className="px-4 py-3 font-medium">Netfang</th>
-              <th className="px-4 py-3 font-medium">Kyn (mat)</th>
-              <th className="px-4 py-3 font-medium">Gælunafn</th>
-              <th className="px-4 py-3 font-medium">Staðfest</th>
-              <th className="px-4 py-3 font-medium">Staða</th>
-              <th className="px-4 py-3 font-medium">Hlutverk</th>
-              <th className="px-4 py-3 font-medium">Virkni</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {users.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">
-                  Engir notendur.
-                </td>
-              </tr>
-            ) : (
-              users.map((u) => (
-                <tr key={u.id} className="border-t border-border">
-                  <td className="px-4 py-3 font-medium">{u.name || "—"}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
-                  <td className="px-4 py-3">
-                    <GenderBadge
-                      assessment={u.genderAssessment}
-                      score={u.genderAssessmentScore}
-                      details={u.genderAssessmentDetails}
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {u.displayName ?? "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    {u.emailVerified ? (
-                      <Badge variant="success">Já</Badge>
-                    ) : (
-                      <Badge variant="outline">Nei</Badge>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <ApprovalBadge status={u.approvalStatus} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <form action={updateUserRole} className="flex items-center gap-2">
-                      <input type="hidden" name="id" value={u.id} />
-                      <select
-                        name="role"
-                        defaultValue={u.role}
-                        className="rounded-md border border-input bg-surface px-2 py-1 text-sm"
-                      >
-                        {ROLES.map((r) => (
-                          <option key={r} value={r}>
-                            {r}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="submit"
-                        className="text-xs font-medium text-primary hover:underline"
-                      >
-                        Vista
-                      </button>
-                    </form>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground">
-                    {u._count.threads} þræðir · {u._count.replies} svör
-                    <br />
-                    {formatDate(u.createdAt)}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <form action={deleteUser}>
-                      <input type="hidden" name="id" value={u.id} />
-                      <button
-                        type="submit"
-                        className="text-xs font-medium text-destructive hover:underline"
-                      >
-                        Eyða
-                      </button>
-                    </form>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <UsersTable users={rows} />
     </div>
   );
 }

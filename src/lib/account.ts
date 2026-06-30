@@ -4,7 +4,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
-import { sendVerificationEmail, sendAdminNotification } from "@/lib/email";
+import { sendVerificationEmail, sendAdminNotification, sendEmail } from "@/lib/email";
 import { APP_URL } from "@/lib/content";
 import { assessGender } from "@/lib/gender-assess";
 
@@ -114,6 +114,30 @@ export async function consumeVerifyToken(token: string): Promise<VerifyResult> {
   }
 
   return "verified";
+}
+
+/**
+ * Admin-initiated password reset: generates a new random password, stores its
+ * hash, and emails the plaintext to the user via the existing transport.
+ */
+export async function adminResetPassword(
+  userId: string,
+): Promise<{ ok: true; email: string } | { ok: false; error: string }> {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { ok: false, error: "Notandi fannst ekki." };
+
+  // ~11 url-safe chars — easy to type, hard to guess.
+  const newPassword = crypto.randomBytes(8).toString("base64url").slice(0, 11);
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+
+  await sendEmail({
+    to: user.email,
+    subject: "Nýtt lykilorð — EkkiEinn.is",
+    text: `Halló,\n\nNýtt lykilorð hefur verið búið til fyrir aðganginn þinn á EkkiEinn.is:\n\n    ${newPassword}\n\nVinsamlegast skráðu þig inn og breyttu lykilorðinu sem fyrst.\n\n${APP_URL}/innskra\n\nKveðja,\nTeymið hjá Ekki einn`,
+  });
+
+  return { ok: true, email: user.email };
 }
 
 export async function resendVerification(email: string): Promise<boolean> {
