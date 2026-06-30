@@ -6,8 +6,9 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
-import { anonymizeText, checkForNames } from "@/lib/ai-anonymize";
+import { anonymizeText, detectNames } from "@/lib/ai-anonymize";
 import { sendAdminNotification } from "@/lib/email";
+import { getSetting } from "@/lib/settings";
 import { APP_URL } from "@/lib/content";
 
 // ---- Preview anonymization (used by the new-thread form) -------------------
@@ -67,28 +68,58 @@ export async function createThread(
       return { error: "Flokkurinn fannst ekki." };
     }
 
-    // Anonymize BEFORE saving. The original (with names) is never stored.
-    const { anonymized, namesFound } = await anonymizeText(content);
+    const mode = await getSetting("ai_moderation_mode");
+    const detection = await detectNames(content);
+
+    // Manual mode (default): keep the text as written but flag for admin
+    // review. Auto mode: redact names before saving.
+    const storedContent =
+      mode === "auto" ? detection.redacted : content;
+    const needsReview = mode !== "auto" && detection.has_names;
 
     const thread = await prisma.thread.create({
       data: {
         categoryId: category.id,
         authorId: user.id,
         title,
-        content: anonymized,
+        content: storedContent,
         victimName: victimName || null,
         perpetratorName: perpetratorName || null,
         isAnonymous,
-        hasAnonymizedNames: namesFound.length > 0,
+        hasAnonymizedNames: mode === "auto" && detection.has_names,
+        needsReview,
+        aiSuggestions: needsReview ? JSON.stringify(detection) : null,
       },
     });
     threadId = thread.id;
+
+    if (needsReview) {
+      await notifyModeration("þræði", threadId);
+    }
   } catch {
     return { error: "Ekki tókst að vista þráðinn." };
   }
 
   revalidatePath(`/samfelag/${categorySlug}`);
   redirect(`/samfelag/${categorySlug}/${threadId}`);
+}
+
+async function notifyModeration(kind: string, threadId: string) {
+  try {
+    await prisma.notification.create({
+      data: {
+        type: "NEEDS_REVIEW",
+        message: `Nýtt efni með hugsanlegum nöfnum (${kind}) — þarfnast yfirferðar`,
+        link: "/admin/moderation",
+      },
+    });
+    await sendAdminNotification(
+      "Efni þarfnast yfirferðar — EkkiEinn.is",
+      `Sjálfvirk nafnagreining fann hugsanlegt mannsnafn í nýju efni (${kind}).\n\nSkoða: ${APP_URL}/admin/moderation`,
+    );
+  } catch {
+    // best-effort
+  }
 }
 
 // ---- Create reply ----------------------------------------------------------
@@ -118,33 +149,29 @@ export async function createReply(
   const { threadId, categorySlug, content } = parsed.data;
 
   try {
-    // Check the reply for names. We keep the text as written but flag it for
-    // admin review so a perpetrator is never named on the open forum.
-    const { hasNames } = await checkForNames(content);
+    const mode = await getSetting("ai_moderation_mode");
+    const detection = await detectNames(content);
+    const hasNames = detection.has_names;
+
+    // Manual mode (default): keep the text but flag for admin review.
+    // Auto mode: redact names before saving.
+    const storedContent = mode === "auto" ? detection.redacted : content;
+    const needsReview = mode !== "auto" && hasNames;
 
     await prisma.reply.create({
       data: {
         threadId,
         authorId: user.id,
-        content,
-        flagged: hasNames,
-        flagReason: hasNames ? "Mögulegt mannsnafn í svari" : null,
+        content: storedContent,
+        flagged: needsReview,
+        flagReason: needsReview ? "Mögulegt mannsnafn í svari" : null,
+        needsReview,
+        aiSuggestions: needsReview ? JSON.stringify(detection) : null,
       },
     });
 
-    if (hasNames) {
-      const link = `${APP_URL}/admin/threads/${threadId}`;
-      await prisma.notification.create({
-        data: {
-          type: "FLAGGED_REPLY",
-          message: `Mögulegt nafn í svari á þráð #${threadId}`,
-          link: `/admin/threads/${threadId}`,
-        },
-      });
-      await sendAdminNotification(
-        "Mögulegt nafn í svari — skoða",
-        `Sjálfvirk skoðun fann mögulegt mannsnafn í nýju svari.\n\nSkoða þráð: ${link}`,
-      );
+    if (needsReview) {
+      await notifyModeration("svari", threadId);
     }
   } catch {
     return { error: "Ekki tókst að vista svarið." };

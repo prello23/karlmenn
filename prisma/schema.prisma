@@ -17,6 +17,12 @@ enum Role {
   ADMIN
 }
 
+enum ApprovalStatus {
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
 enum SupportType {
   LEGAL
   PSYCH
@@ -40,6 +46,9 @@ model User {
   image        String?
   isAnonymous  Boolean  @default(true)
   role         Role     @default(USER)
+
+  // Admin must approve new (non-admin) users before they can sign in.
+  approvalStatus ApprovalStatus @default(PENDING_APPROVAL)
 
   // Email verification (custom flow — single-use token, 48h expiry).
   emailVerified  Boolean   @default(false)
@@ -89,6 +98,9 @@ model Thread {
   isLocked           Boolean @default(false)
   isHidden           Boolean @default(false)
   hasAnonymizedNames Boolean @default(false)
+  // AI name-moderation (manual mode): flagged for admin review + suggestions.
+  needsReview        Boolean @default(false)
+  aiSuggestions      String?
   upvotes            Int     @default(0)
 
   createdAt DateTime @default(now())
@@ -111,6 +123,9 @@ model Reply {
   // Set when the AI name check suspects a person name slipped through.
   flagged    Boolean @default(false)
   flagReason String?
+  // AI name-moderation (manual mode): flagged for admin review + suggestions.
+  needsReview   Boolean @default(false)
+  aiSuggestions String?
   upvotes    Int     @default(0)
 
   createdAt DateTime @default(now())

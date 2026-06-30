@@ -1,11 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useEditor, EditorContent, type Editor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Link from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
-import Placeholder from "@tiptap/extension-placeholder";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Loader2, ImagePlus, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -37,6 +32,10 @@ function TbBtn({
       {children}
     </button>
   );
+}
+
+function Separator() {
+  return <span className="mx-1 h-5 w-px bg-border" />;
 }
 
 function ImageDialog({
@@ -145,96 +144,12 @@ function ImageDialog({
   );
 }
 
-function Toolbar({
-  editor,
-  htmlMode,
-  onToggleHtml,
-  onOpenImage,
-}: {
-  editor: Editor;
-  htmlMode: boolean;
-  onToggleHtml: () => void;
-  onOpenImage: () => void;
-}) {
-  const setLink = useCallback(() => {
-    const prev = editor.getAttributes("link").href as string | undefined;
-    const url = window.prompt("Slóð hlekks (skildu eftir autt til að fjarlægja):", prev ?? "");
-    if (url === null) return;
-    if (url === "") {
-      editor.chain().focus().extendMarkRange("link").unsetLink().run();
-      return;
-    }
-    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
-  }, [editor]);
-
-  return (
-    <div className="flex flex-wrap items-center gap-1 border-b border-border bg-card p-2">
-      <TbBtn
-        title="Fyrirsögn 2"
-        active={editor.isActive("heading", { level: 2 })}
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-      >
-        H2
-      </TbBtn>
-      <TbBtn
-        title="Fyrirsögn 3"
-        active={editor.isActive("heading", { level: 3 })}
-        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-      >
-        H3
-      </TbBtn>
-      <TbBtn
-        title="Málsgrein"
-        active={editor.isActive("paragraph")}
-        onClick={() => editor.chain().focus().setParagraph().run()}
-      >
-        ¶
-      </TbBtn>
-      <span className="mx-1 h-5 w-px bg-border" />
-      <TbBtn
-        title="Feitletrað"
-        active={editor.isActive("bold")}
-        onClick={() => editor.chain().focus().toggleBold().run()}
-      >
-        <strong>B</strong>
-      </TbBtn>
-      <TbBtn
-        title="Skáletrað"
-        active={editor.isActive("italic")}
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-      >
-        <em>I</em>
-      </TbBtn>
-      <TbBtn
-        title="Listi"
-        active={editor.isActive("bulletList")}
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-      >
-        • Listi
-      </TbBtn>
-      <span className="mx-1 h-5 w-px bg-border" />
-      <TbBtn title="Hlekkur" active={editor.isActive("link")} onClick={setLink}>
-        🔗 Hlekkur
-      </TbBtn>
-      <TbBtn title="Mynd" onClick={onOpenImage}>
-        🖼️ Mynd
-      </TbBtn>
-      <TbBtn
-        title="Hreinsa snið"
-        onClick={() =>
-          editor.chain().focus().unsetAllMarks().clearNodes().run()
-        }
-      >
-        🔄 Hreinsa
-      </TbBtn>
-      <span className="mx-1 h-5 w-px bg-border" />
-      <TbBtn title="Sýna HTML" active={htmlMode} onClick={onToggleHtml}>
-        {"</> HTML"}
-      </TbBtn>
-    </div>
-  );
-}
-
+/**
+ * A contenteditable WYSIWYG editor that renders stored HTML faithfully (no
+ * sanitising/stripping), using the same `.page-content` styling as the public
+ * page. The DOM is seeded once per mode switch so typing never resets the
+ * caret (we deliberately do NOT bind innerHTML to the changing `value` prop).
+ */
 export function TipTapEditor({
   value,
   onChange,
@@ -242,90 +157,119 @@ export function TipTapEditor({
   value: string;
   onChange: (html: string) => void;
 }) {
+  const editorRef = useRef<HTMLDivElement>(null);
   const [htmlMode, setHtmlMode] = useState(false);
   const [html, setHtml] = useState(value);
+
   const [showImage, setShowImage] = useState(false);
 
-  const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
-      StarterKit,
-      Link.configure({ openOnClick: false, autolink: true }),
-      Image,
-      Placeholder.configure({ placeholder: "Skrifaðu efni síðunnar..." }),
-    ],
-    content: value,
-    editorProps: {
-      attributes: {
-        // Share the public page styling so the editor is a true WYSIWYG.
-        class: "page-content tiptap-content focus:outline-none",
-      },
-    },
-    onUpdate: ({ editor }) => {
-      const next = editor.getHTML();
-      setHtml(next);
-      onChange(next);
-    },
-  });
-
-  // Keep editor in sync if the parent value changes externally (rare).
+  // Seed the contenteditable DOM from `html` whenever we (re)enter WYSIWYG
+  // mode (and on first mount). Not keyed on `html`, so typing doesn't reset it.
   useEffect(() => {
-    if (editor && !htmlMode && value !== editor.getHTML()) {
-      editor.commands.setContent(value, false);
-      setHtml(value);
+    if (!htmlMode && editorRef.current) {
+      editorRef.current.innerHTML = html;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor]);
+  }, [htmlMode]);
+
+  const handleInput = useCallback(() => {
+    if (editorRef.current) {
+      const newHtml = editorRef.current.innerHTML;
+      setHtml(newHtml);
+      onChange(newHtml);
+    }
+  }, [onChange]);
+
+  function exec(command: string, arg?: string) {
+    document.execCommand(command, false, arg);
+    editorRef.current?.focus();
+    handleInput();
+  }
 
   function toggleHtml() {
-    if (!editor) return;
     if (!htmlMode) {
-      // Going INTO html mode: capture current editor HTML.
-      setHtml(editor.getHTML());
+      // Going INTO html mode — capture current DOM as source.
+      if (editorRef.current) setHtml(editorRef.current.innerHTML);
       setHtmlMode(true);
     } else {
-      // Going BACK to WYSIWYG: push edited HTML into the editor.
-      editor.commands.setContent(html, false);
+      // Going BACK to WYSIWYG — the seeding effect applies `html` to the DOM.
       onChange(html);
       setHtmlMode(false);
     }
   }
 
-  function insertImage(url: string) {
-    editor?.chain().focus().setImage({ src: url }).run();
+  function insertLink() {
+    const url = window.prompt("Slóð hlekks:", "https://");
+    if (url) exec("createLink", url);
   }
 
-  if (!editor) {
-    return (
-      <div className="h-64 rounded-lg border border-input bg-background" />
+  function insertImage(url: string) {
+    exec(
+      "insertHTML",
+      `<img src="${url}" style="max-width:100%;height:auto;border-radius:0.5rem;margin:1rem 0" />`,
     );
   }
 
   return (
     <>
-      {/* Editor — styled as live page (WYSIWYG), like karlmenn.outzone.is */}
-      <div className="overflow-hidden rounded-lg border border-input bg-background">
-        <Toolbar
-          editor={editor}
-          htmlMode={htmlMode}
-          onToggleHtml={toggleHtml}
-          onOpenImage={() => setShowImage(true)}
-        />
-
-        {htmlMode ? (
-          <textarea
-            value={html}
-            onChange={(e) => {
-              setHtml(e.target.value);
-              onChange(e.target.value);
-            }}
-            spellCheck={false}
-            className="block min-h-[260px] w-full resize-y bg-background p-4 font-mono text-xs text-foreground focus:outline-none"
-          />
-        ) : (
-          <EditorContent editor={editor} />
-        )}
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-1 rounded-t-lg border border-border bg-card p-2">
+        <TbBtn title="Fyrirsögn 2" onClick={() => exec("formatBlock", "<h2>")}>
+          H2
+        </TbBtn>
+        <TbBtn title="Fyrirsögn 3" onClick={() => exec("formatBlock", "<h3>")}>
+          H3
+        </TbBtn>
+        <TbBtn title="Málsgrein" onClick={() => exec("formatBlock", "<p>")}>
+          ¶
+        </TbBtn>
+        <Separator />
+        <TbBtn title="Feitletrað" onClick={() => exec("bold")}>
+          <strong>B</strong>
+        </TbBtn>
+        <TbBtn title="Skáletrað" onClick={() => exec("italic")}>
+          <em>I</em>
+        </TbBtn>
+        <TbBtn title="Listi" onClick={() => exec("insertUnorderedList")}>
+          • Listi
+        </TbBtn>
+        <Separator />
+        <TbBtn title="Hlekkur" onClick={insertLink}>
+          🔗 Hlekkur
+        </TbBtn>
+        <TbBtn title="Mynd" onClick={() => setShowImage(true)}>
+          🖼️ Mynd
+        </TbBtn>
+        <TbBtn title="Hreinsa snið" onClick={() => exec("removeFormat")}>
+          🔄 Hreinsa
+        </TbBtn>
+        <Separator />
+        <TbBtn title="Sýna HTML" active={htmlMode} onClick={toggleHtml}>
+          {"</> HTML"}
+        </TbBtn>
       </div>
+
+      {/* Content area — renders exactly as the live page */}
+      {htmlMode ? (
+        <textarea
+          value={html}
+          onChange={(e) => {
+            setHtml(e.target.value);
+            onChange(e.target.value);
+          }}
+          spellCheck={false}
+          className="block min-h-[400px] w-full resize-y rounded-b-lg border border-t-0 border-border bg-background p-6 font-mono text-xs text-foreground focus:outline-none"
+        />
+      ) : (
+        <div
+          ref={editorRef}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={handleInput}
+          className="page-content min-h-[400px] rounded-b-lg border border-t-0 border-border bg-[hsl(225,21%,7%)] p-6 focus:outline-none"
+          style={{ caretColor: "hsl(38, 92%, 50%)" }}
+        />
+      )}
 
       {showImage && (
         <ImageDialog

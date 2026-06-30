@@ -4,7 +4,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
-import { sendVerificationEmail } from "@/lib/email";
+import { sendVerificationEmail, sendAdminNotification } from "@/lib/email";
 import { APP_URL } from "@/lib/content";
 
 const TOKEN_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
@@ -76,6 +76,26 @@ export async function consumeVerifyToken(token: string): Promise<VerifyResult> {
       verifyTokenExp: null,
     },
   });
+
+  // The user is now verified and awaiting admin approval — notify admins.
+  if (user.approvalStatus === "PENDING_APPROVAL" && user.role !== "ADMIN") {
+    try {
+      await prisma.notification.create({
+        data: {
+          type: "PENDING_USER",
+          message: `Nýr notandi bíður samþykkis: ${user.email}`,
+          link: "/admin/notendur",
+        },
+      });
+      await sendAdminNotification(
+        "Nýr notandi bíður samþykkis — EkkiEinn.is",
+        `Notandinn ${user.email} hefur staðfest netfang sitt og bíður nú samþykkis.\n\nFarðu á ${APP_URL}/admin/notendur til að samþykkja eða hafna.`,
+      );
+    } catch {
+      // best-effort — never block verification on notification failure
+    }
+  }
+
   return "verified";
 }
 

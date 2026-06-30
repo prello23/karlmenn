@@ -38,6 +38,10 @@ Teymið hjá Ekki einn`,
 
   // ---- Kerfið ----
   maintenance_mode: "false",
+
+  // ---- Nafnagreining (AI moderation) ----
+  // "manual" = flagga og leggja til; "auto" = sjálfvirk ritskoðun.
+  ai_moderation_mode: "manual",
 } as const;
 
 export type SettingKey = keyof typeof SETTING_DEFAULTS;

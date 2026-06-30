@@ -7,6 +7,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { setSetting } from "@/lib/settings";
+import { sendEmail } from "@/lib/email";
+import { APP_URL } from "@/lib/content";
 
 // ---- Threads ---------------------------------------------------------------
 
@@ -89,6 +91,38 @@ export async function deleteUser(formData: FormData) {
   if (id === admin.id) return; // never delete yourself
   await prisma.user.delete({ where: { id } });
   revalidatePath("/admin/notendur");
+}
+
+export async function approveUser(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const user = await prisma.user.update({
+    where: { id },
+    data: { approvalStatus: "APPROVED" },
+  });
+  await sendEmail({
+    to: user.email,
+    subject: "Aðgangurinn þinn hefur verið samþykktur — EkkiEinn.is",
+    text: `Halló,\n\nAðgangurinn þinn á EkkiEinn.is hefur verið samþykktur! Þú getur nú skráð þig inn og tekið þátt í samfélaginu.\n\n${APP_URL}/innskra\n\nKveðja,\nTeymið hjá Ekki einn`,
+  });
+  revalidatePath("/admin/notendur");
+  revalidatePath("/admin");
+}
+
+export async function rejectUser(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const user = await prisma.user.update({
+    where: { id },
+    data: { approvalStatus: "REJECTED" },
+  });
+  await sendEmail({
+    to: user.email,
+    subject: "Aðgangsbeiðni — EkkiEinn.is",
+    text: `Halló,\n\nÞví miður getum við ekki samþykkt aðgang þinn að EkkiEinn.is að svo stöddu.\n\nEf þú telur þetta vera mistök, hafðu samband við info@ekkieinn.is.\n\nKveðja,\nTeymið hjá Ekki einn`,
+  });
+  revalidatePath("/admin/notendur");
+  revalidatePath("/admin");
 }
 
 // ---- Categories ------------------------------------------------------------

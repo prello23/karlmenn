@@ -188,3 +188,38 @@ export async function checkForNames(text: string): Promise<NameCheckResult> {
   const names = heuristicFindNames(text);
   return { hasNames: names.length > 0, confidence: names.length > 0 ? 0.5 : 0.6 };
 }
+
+export type NameSuggestion = {
+  original: string;
+  replacement: string;
+  context: string;
+};
+
+export type NameDetection = {
+  has_names: boolean;
+  names_found: NameSuggestion[];
+  redacted: string;
+};
+
+function contextSnippet(text: string, name: string): string {
+  const i = text.indexOf(name);
+  if (i < 0) return "";
+  const start = Math.max(0, i - 30);
+  const end = Math.min(text.length, i + name.length + 30);
+  return (start > 0 ? "…" : "") + text.slice(start, end) + (end < text.length ? "…" : "");
+}
+
+/**
+ * Detects person names and returns structured suggestions for manual admin
+ * moderation (does not modify anything). Uses the same provider/heuristic
+ * pipeline as anonymizeText.
+ */
+export async function detectNames(text: string): Promise<NameDetection> {
+  const { anonymized, namesFound, replacements } = await anonymizeText(text);
+  const names_found = namesFound.map((n) => ({
+    original: n,
+    replacement: replacements[n] ?? "[XXX]",
+    context: contextSnippet(text, n),
+  }));
+  return { has_names: names_found.length > 0, names_found, redacted: anonymized };
+}

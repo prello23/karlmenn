@@ -94,7 +94,16 @@ export async function loginAction(
       unverified: true,
       email: normalized,
       error:
-        "Þú þarft að staðfesta netfangið þitt áður en þú getur skráð þig inn.",
+        "Vinsamlegast staðfestu netfangið þitt. Athugaðu pósthólfið þitt.",
+    };
+  }
+  // Admins bypass approval; everyone else must be approved.
+  if (user.role !== "ADMIN" && user.approvalStatus !== "APPROVED") {
+    return {
+      error:
+        user.approvalStatus === "REJECTED"
+          ? "Því miður var aðgangsbeiðni þinni hafnað."
+          : "Aðgangurinn þinn bíður samþykkis stjórnanda.",
     };
   }
 

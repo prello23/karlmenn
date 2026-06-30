@@ -46,6 +46,11 @@ export const authConfig: NextAuthConfig = {
           throw new Error(AUTH_ERRORS.UNVERIFIED);
         }
 
+        // Non-admins must be approved by an admin before they can sign in.
+        if (user.role !== "ADMIN" && user.approvalStatus !== "APPROVED") {
+          return null;
+        }
+
         return {
           id: user.id,
           email: user.email,
