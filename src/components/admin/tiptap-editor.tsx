@@ -238,9 +238,12 @@ function Toolbar({
 export function TipTapEditor({
   value,
   onChange,
+  previewTitle,
 }: {
   value: string;
   onChange: (html: string) => void;
+  /** Shown as the H1 in the live preview (the live page heading). */
+  previewTitle?: string;
 }) {
   const [htmlMode, setHtmlMode] = useState(false);
   const [html, setHtml] = useState(value);
@@ -257,7 +260,8 @@ export function TipTapEditor({
     content: value,
     editorProps: {
       attributes: {
-        class: "tiptap-content focus:outline-none",
+        // Share the public page styling so the editor is a true WYSIWYG.
+        class: "page-content tiptap-content focus:outline-none",
       },
     },
     onUpdate: ({ editor }) => {
@@ -296,32 +300,67 @@ export function TipTapEditor({
 
   if (!editor) {
     return (
-      <div className="h-64 rounded-lg border border-input bg-surface" />
+      <div className="h-64 rounded-lg border border-input bg-background" />
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-input bg-surface">
-      <Toolbar
-        editor={editor}
-        htmlMode={htmlMode}
-        onToggleHtml={toggleHtml}
-        onOpenImage={() => setShowImage(true)}
-      />
-
-      {htmlMode ? (
-        <textarea
-          value={html}
-          onChange={(e) => {
-            setHtml(e.target.value);
-            onChange(e.target.value);
-          }}
-          spellCheck={false}
-          className="block min-h-[260px] w-full resize-y bg-surface p-4 font-mono text-xs text-foreground focus:outline-none"
+    <div className="space-y-6">
+      {/* Editor */}
+      <div className="overflow-hidden rounded-lg border border-input bg-background">
+        <Toolbar
+          editor={editor}
+          htmlMode={htmlMode}
+          onToggleHtml={toggleHtml}
+          onOpenImage={() => setShowImage(true)}
         />
-      ) : (
-        <EditorContent editor={editor} />
-      )}
+
+        {htmlMode ? (
+          <textarea
+            value={html}
+            onChange={(e) => {
+              setHtml(e.target.value);
+              onChange(e.target.value);
+            }}
+            spellCheck={false}
+            className="block min-h-[260px] w-full resize-y bg-background p-4 font-mono text-xs text-foreground focus:outline-none"
+          />
+        ) : (
+          <EditorContent editor={editor} />
+        )}
+      </div>
+
+      {/* Live preview — renders exactly as the public page */}
+      <div>
+        <div className="mb-3 flex items-center gap-3">
+          <span className="text-sm font-semibold text-foreground">
+            👁️ Forskoðun
+          </span>
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">
+            eins og síðan birtist
+          </span>
+        </div>
+        <div className="rounded-lg border border-border bg-background p-5 sm:p-8">
+          <div className="mx-auto max-w-3xl">
+            {previewTitle && (
+              <h1 className="mb-5 text-3xl font-bold tracking-tight sm:text-4xl">
+                {previewTitle}
+              </h1>
+            )}
+            {html.replace(/<[^>]*>/g, "").trim() ? (
+              <div
+                className="page-content"
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Forskoðun birtist hér þegar þú skrifar efni.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
 
       {showImage && (
         <ImageDialog

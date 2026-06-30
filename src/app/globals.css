@@ -86,86 +86,28 @@
   }
 }
 
-/* TipTap editor content — dark theme, WYSIWYG preview */
-.tiptap-content {
-  min-height: 260px;
-  padding: 1rem 1.25rem;
-  color: hsl(var(--foreground));
-  line-height: 1.7;
-}
-.tiptap-content:focus {
-  outline: none;
-}
-.tiptap-content h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  margin: 1.25rem 0 0.5rem;
-}
-.tiptap-content h3 {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin: 1rem 0 0.4rem;
-}
-.tiptap-content p {
-  margin: 0.6rem 0;
-}
-.tiptap-content ul {
-  list-style: disc;
-  padding-left: 1.4rem;
-  margin: 0.6rem 0;
-}
-.tiptap-content ol {
-  list-style: decimal;
-  padding-left: 1.4rem;
-  margin: 0.6rem 0;
-}
-.tiptap-content li {
-  margin: 0.2rem 0;
-}
-.tiptap-content a {
-  color: hsl(var(--primary));
-  text-decoration: underline;
-  cursor: pointer;
-}
-.tiptap-content img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 0.5rem;
-  margin: 0.75rem 0;
-}
-.tiptap-content blockquote {
-  border-left: 3px solid hsl(var(--border));
-  padding-left: 1rem;
-  color: hsl(var(--muted-foreground));
-  margin: 0.75rem 0;
-}
-.tiptap-content :is(h2, h3, p):first-child {
-  margin-top: 0;
-}
-/* Placeholder text when empty */
-.tiptap-content p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
-  float: left;
-  height: 0;
-  pointer-events: none;
-  color: hsl(var(--muted-foreground));
-}
-
-/* Render saved page HTML on public pages with the same styling */
+/* Shared page-content styling — the single source of truth used by:
+   - public pages (DbPageContent)
+   - the TipTap editor area (.ProseMirror.page-content)
+   - the admin live preview
+   so the editor is a true WYSIWYG of the live page. */
 .page-content {
   color: hsl(var(--foreground) / 0.9);
   line-height: 1.7;
+  font-family: var(--font-inter), system-ui, sans-serif;
 }
 .page-content h2 {
   font-size: 1.5rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
   margin: 1.5rem 0 0.5rem;
+  color: hsl(var(--foreground));
 }
 .page-content h3 {
   font-size: 1.2rem;
   font-weight: 600;
   margin: 1.25rem 0 0.4rem;
+  color: hsl(var(--foreground));
 }
 .page-content p {
   margin: 0.75rem 0;
@@ -175,13 +117,54 @@
   padding-left: 1.4rem;
   margin: 0.75rem 0;
 }
+.page-content ol {
+  list-style: decimal;
+  padding-left: 1.4rem;
+  margin: 0.75rem 0;
+}
+.page-content li {
+  margin: 0.25rem 0;
+}
 .page-content a {
   color: hsl(var(--primary));
   text-decoration: underline;
+}
+.page-content a:hover {
+  color: hsl(var(--primary) / 0.85);
+}
+.page-content strong {
+  color: hsl(var(--foreground));
+  font-weight: 700;
 }
 .page-content img {
   max-width: 100%;
   height: auto;
   border-radius: 0.5rem;
   margin: 1rem 0;
+}
+.page-content blockquote {
+  border-left: 3px solid hsl(var(--border));
+  padding-left: 1rem;
+  color: hsl(var(--muted-foreground));
+  margin: 0.75rem 0;
+}
+.page-content :is(h2, h3, p, ul, ol):first-child {
+  margin-top: 0;
+}
+
+/* Editor-only concerns layered on top of .page-content */
+.tiptap-content {
+  min-height: 260px;
+  padding: 1rem 1.25rem;
+}
+.tiptap-content:focus {
+  outline: none;
+}
+/* Placeholder text when the editor is empty */
+.tiptap-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: hsl(var(--muted-foreground));
 }

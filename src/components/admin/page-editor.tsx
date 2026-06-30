@@ -187,7 +187,11 @@ export function PageEditor({ page }: { page?: PageData }) {
 
         <div className="grid gap-2">
           <Label>Efni síðunnar</Label>
-          <TipTapEditor value={content} onChange={setContent} />
+          <TipTapEditor
+            value={content}
+            onChange={setContent}
+            previewTitle={menuTitle || title}
+          />
         </div>
       </div>
 
