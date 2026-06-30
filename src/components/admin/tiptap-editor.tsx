@@ -238,12 +238,9 @@ function Toolbar({
 export function TipTapEditor({
   value,
   onChange,
-  previewTitle,
 }: {
   value: string;
   onChange: (html: string) => void;
-  /** Shown as the H1 in the live preview (the live page heading). */
-  previewTitle?: string;
 }) {
   const [htmlMode, setHtmlMode] = useState(false);
   const [html, setHtml] = useState(value);
@@ -305,8 +302,8 @@ export function TipTapEditor({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Editor */}
+    <>
+      {/* Editor — styled as live page (WYSIWYG), like karlmenn.outzone.is */}
       <div className="overflow-hidden rounded-lg border border-input bg-background">
         <Toolbar
           editor={editor}
@@ -336,22 +333,6 @@ export function TipTapEditor({
           onInsert={insertImage}
         />
       )}
-
-      {/* Live Preview */}
-      {previewTitle && (
-        <div className="mt-6">
-          <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
-            <span>👁</span>
-            <span>Forskoðun</span>
-            <span className="flex-1 border-t border-gray-700"></span>
-            <span className="text-xs text-gray-500">eins og síðan birtist</span>
-          </div>
-          <div className="page-content rounded-xl border border-gray-700 p-6 bg-[rgb(11,13,19)]">
-            <h1 className="text-2xl font-bold mb-4">{previewTitle}</h1>
-            <div dangerouslySetInnerHTML={{ __html: html }} />
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

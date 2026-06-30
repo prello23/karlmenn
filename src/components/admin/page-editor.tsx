@@ -190,7 +190,7 @@ export function PageEditor({ page }: { page?: PageData }) {
           <TipTapEditor
             value={content}
             onChange={setContent}
-            previewTitle={menuTitle || title}
+            
           />
         </div>
       </div>
