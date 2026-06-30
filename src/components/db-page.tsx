@@ -78,14 +78,12 @@ export async function DbPageFull({
     return <PageHero title={page?.menuTitle || fallbackTitle || ""} />;
   }
 
+  // Full-bleed: the stored HTML carries its own .container/.hero/section layout
+  // (karlmenn design), so the wrapper must not constrain width.
   return (
-    <section className="py-8 sm:py-10">
-      <div className="container">
-        <div
-          className="page-content mx-auto max-w-5xl"
-          dangerouslySetInnerHTML={{ __html: content }}
-        />
-      </div>
-    </section>
+    <div
+      className="page-content"
+      dangerouslySetInnerHTML={{ __html: content }}
+    />
   );
 }
