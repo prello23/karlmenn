@@ -17,6 +17,57 @@ function StatusBadge({ status }: { status: string }) {
   return <Badge variant="outline">Bíður</Badge>;
 }
 
+function GenderBreakdown({
+  score,
+  details,
+}: {
+  score: number | null;
+  details: string | null;
+}) {
+  if (!details) return null;
+  let parsed: {
+    breakdown?: {
+      nameScore: number | null;
+      emailScore: number | null;
+      onlineScore: number | null;
+      finalScore: number;
+    };
+    reasons?: string[];
+  } | null = null;
+  try {
+    parsed = JSON.parse(details);
+  } catch {
+    return null;
+  }
+  const b = parsed?.breakdown;
+  const pct = score != null ? Math.round(score * 100) : null;
+
+  return (
+    <div className="mt-6 rounded-xl border border-border bg-card p-5">
+      <h2 className="mb-2 text-lg font-semibold text-primary">Kynjamat (sundurliðun)</h2>
+      {b ? (
+        <ul className="space-y-1 text-sm">
+          <li>Nafnaskor: {b.nameScore ?? "—"}%</li>
+          <li>Netfangsskor: {b.emailScore ?? "—"}%</li>
+          <li>Netleitarskor: {b.onlineScore ?? "—"}%</li>
+          <li className="font-semibold">Lokaskor: {b.finalScore}%</li>
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Lokaskor: {pct != null ? `${pct}%` : "—"}
+        </p>
+      )}
+      {parsed?.reasons && parsed.reasons.length > 0 && (
+        <ul className="mt-3 list-inside list-disc text-xs text-muted-foreground">
+          {parsed.reasons.map((r, i) => (
+            <li key={i}>{r}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5 border-b border-border py-2 sm:flex-row sm:items-center sm:justify-between">
@@ -96,6 +147,12 @@ export default async function AdminUserDetailPage({
           {user.lastLoginIp ?? "Ekki skráð"}
         </InfoRow>
       </div>
+
+      {/* Gender assessment breakdown */}
+      <GenderBreakdown
+        score={user.genderAssessmentScore}
+        details={user.genderAssessmentDetails}
+      />
 
       {/* Edit / reset / delete */}
       <div className="mt-6">

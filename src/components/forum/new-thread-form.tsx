@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useFormState } from "react-dom";
-import { Eye, ShieldCheck, Loader2 } from "lucide-react";
+import { Eye, ShieldCheck, Loader2, AlertTriangle } from "lucide-react";
 
 import {
   createThread,
@@ -36,6 +36,36 @@ export function NewThreadForm({ categorySlug }: { categorySlug: string }) {
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="categorySlug" value={categorySlug} />
+      <input
+        type="hidden"
+        name="pendingThreadId"
+        value={state?.pendingThreadId ?? ""}
+      />
+
+      {state?.pendingReview && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-amber-500">
+            <AlertTriangle className="h-4 w-4" />
+            Nöfn fundust í textanum
+          </p>
+          <p className="mt-2 text-sm text-foreground/90">
+            Eftirfarandi orð gætu verið nöfn:{" "}
+            {state.flaggedNames?.map((n) => (
+              <span
+                key={n}
+                className="mx-0.5 inline-block rounded bg-amber-500/20 px-1.5 py-0.5 font-medium text-amber-200"
+              >
+                {n}
+              </span>
+            ))}
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Vinsamlegast fjarlægðu eða breyttu nöfnum áður en þráðurinn birtist. Þú
+            getur notað dulnefni eða skammstafanir (t.d. &quot;J.&quot; eða
+            &quot;fyrrverandi mín&quot;). Breyttu textanum og sendu aftur.
+          </p>
+        </div>
+      )}
 
       <div className="grid gap-2">
         <Label htmlFor="title">Titill</Label>

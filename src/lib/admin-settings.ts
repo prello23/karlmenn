@@ -84,6 +84,49 @@ export async function getEmailConfig(): Promise<EmailConfig> {
   };
 }
 
+export type RegistrationSettings = {
+  autoApproveEnabled: boolean;
+  threshold: number; // percent 50..100
+  checks: { name: boolean; email: boolean; online: boolean };
+  threadNameModeration: boolean;
+};
+
+/** Registration auto-approval + content-moderation settings (DB-backed). */
+export async function getRegistrationSettings(): Promise<RegistrationSettings> {
+  let db: Record<string, string> = {};
+  try {
+    const rows = await prisma.setting.findMany({
+      where: {
+        key: {
+          in: [
+            "auto_approve_enabled",
+            "auto_approve_threshold",
+            "auto_approve_check_name",
+            "auto_approve_check_email",
+            "auto_approve_check_online",
+            "thread_name_moderation",
+          ],
+        },
+      },
+    });
+    db = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  } catch {
+    db = {};
+  }
+
+  const threshold = Number(db.auto_approve_threshold);
+  return {
+    autoApproveEnabled: db.auto_approve_enabled !== "false", // default ON
+    threshold: Number.isFinite(threshold) ? Math.min(100, Math.max(50, threshold)) : 80,
+    checks: {
+      name: db.auto_approve_check_name !== "false",
+      email: db.auto_approve_check_email !== "false",
+      online: db.auto_approve_check_online !== "false",
+    },
+    threadNameModeration: db.thread_name_moderation !== "false", // default ON
+  };
+}
+
 /** OpenAI API key: DB override first, then `.env`. */
 export async function getOpenAIKey(): Promise<string | null> {
   return (await getDbSetting("openai_api_key")) || process.env.OPENAI_API_KEY || null;

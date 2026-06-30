@@ -9,6 +9,7 @@ import { requireAdmin } from "@/lib/auth-helpers";
 import { setSetting } from "@/lib/settings";
 import { sendEmail } from "@/lib/email";
 import { APP_URL } from "@/lib/content";
+import { detectNames as detectIcelandicNames } from "@/lib/name-detection";
 
 // ---- Threads ---------------------------------------------------------------
 
@@ -52,6 +53,74 @@ export async function toggleThreadHidden(formData: FormData) {
   revalidatePath(`/admin/threads/${id}`);
   revalidatePath("/admin/threads");
   revalidatePath("/forum");
+}
+
+// ---- Thread content moderation (PENDING_REVIEW workflow) -------------------
+
+export async function approveThread(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  await prisma.thread.update({
+    where: { id },
+    data: {
+      status: "PUBLISHED",
+      needsReview: false,
+      flaggedNames: null,
+    },
+  });
+  console.log(`[admin] thread ${id} approved + published`);
+  revalidatePath(`/admin/threads/${id}`);
+  revalidatePath("/admin/threads");
+  revalidatePath("/samfelag");
+}
+
+export async function updateThreadContent(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const title = String(formData.get("title") ?? "").trim();
+  const content = String(formData.get("content") ?? "").trim();
+
+  // Re-scan after the admin edit so the flagged list reflects the new text.
+  const detected = detectIcelandicNames(`${title}\n${content}`);
+  const flaggedNames = Array.from(new Set(detected.map((d) => d.original)));
+
+  await prisma.thread.update({
+    where: { id },
+    data: {
+      title,
+      content,
+      flaggedNames: flaggedNames.length ? JSON.stringify(flaggedNames) : null,
+    },
+  });
+  console.log(
+    `[admin] thread ${id} text edited (${flaggedNames.length} names still flagged)`,
+  );
+  revalidatePath(`/admin/threads/${id}`);
+}
+
+export async function rejectThread(formData: FormData) {
+  await requireAdmin();
+  const id = String(formData.get("id"));
+  const note = String(formData.get("note") ?? "").trim();
+
+  const thread = await prisma.thread.update({
+    where: { id },
+    data: { status: "PENDING_REVIEW", moderationNote: note || null },
+    include: { author: { select: { email: true } } },
+  });
+  console.log(`[admin] thread ${id} rejected with note`);
+
+  if (thread.author?.email) {
+    await sendEmail({
+      to: thread.author.email,
+      subject: "Þráður þinn þarfnast breytinga — EkkiEinn.is",
+      text: `Halló,\n\nÞráður þinn "${thread.title}" var ekki birtur þar sem hann gæti innihaldið nöfn.${
+        note ? `\n\nAthugasemd stjórnanda:\n${note}` : ""
+      }\n\nVinsamlegast fjarlægðu nöfn og sendu inn að nýju.\n\n${APP_URL}\n\nKveðja,\nTeymið hjá Ekki einn`,
+    });
+  }
+  revalidatePath(`/admin/threads/${id}`);
+  revalidatePath("/admin/threads");
 }
 
 export async function deleteReply(formData: FormData) {

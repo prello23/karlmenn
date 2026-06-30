@@ -7,8 +7,10 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
 import { anonymizeText, detectNames } from "@/lib/ai-anonymize";
+import { detectNames as detectIcelandicNames } from "@/lib/name-detection";
 import { sendAdminNotification } from "@/lib/email";
 import { getSetting } from "@/lib/settings";
+import { getDbSetting } from "@/lib/admin-settings";
 import { APP_URL } from "@/lib/content";
 
 // ---- Preview anonymization (used by the new-thread form) -------------------
@@ -33,9 +35,17 @@ const threadSchema = z.object({
   victimName: z.string().trim().max(120).optional(),
   perpetratorName: z.string().trim().max(120).optional(),
   isAnonymous: z.coerce.boolean(),
+  pendingThreadId: z.string().optional(),
 });
 
-export type ThreadState = { error?: string } | undefined;
+export type ThreadState =
+  | {
+      error?: string;
+      pendingReview?: boolean;
+      flaggedNames?: string[];
+      pendingThreadId?: string;
+    }
+  | undefined;
 
 export async function createThread(
   _prev: ThreadState,
@@ -50,14 +60,22 @@ export async function createThread(
     victimName: formData.get("victimName") || undefined,
     perpetratorName: formData.get("perpetratorName") || undefined,
     isAnonymous: formData.get("isAnonymous") === "on",
+    pendingThreadId: formData.get("pendingThreadId") || undefined,
   });
 
   if (!parsed.success) {
     return { error: parsed.error.errors[0]?.message ?? "Ógild gögn" };
   }
 
-  const { categorySlug, title, content, victimName, perpetratorName, isAnonymous } =
-    parsed.data;
+  const {
+    categorySlug,
+    title,
+    content,
+    victimName,
+    perpetratorName,
+    isAnonymous,
+    pendingThreadId,
+  } = parsed.data;
 
   let threadId: string;
   try {
@@ -68,14 +86,84 @@ export async function createThread(
       return { error: "Flokkurinn fannst ekki." };
     }
 
+    // ---- Name-detection gate (privacy moderation) ----
+    const moderationOn =
+      (await getDbSetting("thread_name_moderation")) !== "false";
+    const detected = moderationOn ? detectIcelandicNames(`${title}\n${content}`) : [];
+    const flaggedNames = Array.from(new Set(detected.map((d) => d.original)));
+
+    if (flaggedNames.length > 0) {
+      // Hold for review — store/update as PENDING_REVIEW, never published yet.
+      if (pendingThreadId) {
+        const owned = await prisma.thread.findFirst({
+          where: { id: pendingThreadId, authorId: user.id },
+          select: { id: true },
+        });
+        if (owned) {
+          await prisma.thread.update({
+            where: { id: owned.id },
+            data: {
+              title,
+              content,
+              victimName: victimName || null,
+              perpetratorName: perpetratorName || null,
+              isAnonymous,
+              status: "PENDING_REVIEW",
+              needsReview: true,
+              flaggedNames: JSON.stringify(flaggedNames),
+            },
+          });
+          return { pendingReview: true, flaggedNames, pendingThreadId: owned.id };
+        }
+      }
+      const created = await prisma.thread.create({
+        data: {
+          categoryId: category.id,
+          authorId: user.id,
+          title,
+          content,
+          victimName: victimName || null,
+          perpetratorName: perpetratorName || null,
+          isAnonymous,
+          status: "PENDING_REVIEW",
+          needsReview: true,
+          flaggedNames: JSON.stringify(flaggedNames),
+        },
+      });
+      await notifyModeration("þræði", created.id);
+      return { pendingReview: true, flaggedNames, pendingThreadId: created.id };
+    }
+
+    // ---- No names → publish (apply legacy anonymization safety net) ----
     const mode = await getSetting("ai_moderation_mode");
     const detection = await detectNames(content);
-
-    // Manual mode (default): keep the text as written but flag for admin
-    // review. Auto mode: redact names before saving.
-    const storedContent =
-      mode === "auto" ? detection.redacted : content;
+    const storedContent = mode === "auto" ? detection.redacted : content;
     const needsReview = mode !== "auto" && detection.has_names;
+
+    if (pendingThreadId) {
+      const owned = await prisma.thread.findFirst({
+        where: { id: pendingThreadId, authorId: user.id },
+        select: { id: true },
+      });
+      if (owned) {
+        await prisma.thread.update({
+          where: { id: owned.id },
+          data: {
+            title,
+            content: storedContent,
+            victimName: victimName || null,
+            perpetratorName: perpetratorName || null,
+            isAnonymous,
+            status: "PUBLISHED",
+            needsReview,
+            flaggedNames: null,
+            hasAnonymizedNames: mode === "auto" && detection.has_names,
+          },
+        });
+        revalidatePath(`/samfelag/${categorySlug}`);
+        redirect(`/samfelag/${categorySlug}/${owned.id}`);
+      }
+    }
 
     const thread = await prisma.thread.create({
       data: {
@@ -96,7 +184,16 @@ export async function createThread(
     if (needsReview) {
       await notifyModeration("þræði", threadId);
     }
-  } catch {
+  } catch (err) {
+    // redirect() throws a special error we must not swallow.
+    if (
+      err &&
+      typeof err === "object" &&
+      "digest" in err &&
+      String((err as { digest?: string }).digest).startsWith("NEXT_REDIRECT")
+    ) {
+      throw err;
+    }
     return { error: "Ekki tókst að vista þráðinn." };
   }
 

@@ -21,7 +21,7 @@ async function getThreads(q?: string) {
             ],
           }
         : undefined,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
       take: 100,
       include: {
         category: { select: { name: true } },
@@ -89,6 +89,11 @@ export default async function AdminThreadsPage({
                       {t.isLocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
                       {t.isHidden && <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />}
                       <span className="font-medium">{t.title}</span>
+                      {t.status === "PENDING_REVIEW" && (
+                        <Badge className="border-amber-500/40 bg-amber-500/15 text-amber-400">
+                          Bíður yfirferðar
+                        </Badge>
+                      )}
                       {t.replies.length > 0 && (
                         <Badge variant="destructive">
                           <Flag className="mr-1 h-3 w-3" />
@@ -96,6 +101,12 @@ export default async function AdminThreadsPage({
                         </Badge>
                       )}
                     </div>
+                    {t.flaggedNames && (
+                      <div className="mt-1 text-xs text-amber-400">
+                        Nöfn fundin:{" "}
+                        {(JSON.parse(t.flaggedNames) as string[]).join(", ")}
+                      </div>
+                    )}
                     {t.perpetratorName && (
                       <div className="mt-1 text-xs text-muted-foreground">
                         Gerandi: {t.perpetratorName}

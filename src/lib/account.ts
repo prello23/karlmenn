@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { sendVerificationEmail, sendAdminNotification, sendEmail } from "@/lib/email";
 import { APP_URL } from "@/lib/content";
 import { assessGender } from "@/lib/gender-assess";
+import { getRegistrationSettings } from "@/lib/admin-settings";
 
 const TOKEN_TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
 
@@ -39,14 +40,21 @@ export async function registerUser(input: {
   const passwordHash = await bcrypt.hash(input.password, 10);
   const token = newToken();
 
-  // Gender assessment (heuristic + optional AI). Best-effort: never block
+  // Gender assessment (name + email + online lookup). Best-effort: never block
   // registration on an assessment failure.
-  const assessment = await assessGender(name, email).catch(() => null);
+  const regSettings = await getRegistrationSettings().catch(() => null);
+  const assessment = await assessGender(
+    name,
+    email,
+    regSettings?.checks ?? { name: true, email: true, online: true },
+  ).catch(() => null);
 
-  // Auto-approval: only confident-male assessments skip manual review.
-  // Everyone else (female / low score / uncertain) is held for an admin.
-  const autoApprove =
-    assessment?.assessment === "LIKELY_MALE" && assessment.score >= 0.8;
+  // Auto-approval: enabled + final score meets the admin-configured threshold.
+  const autoApprove = Boolean(
+    regSettings?.autoApproveEnabled &&
+      assessment &&
+      assessment.scorePercent >= regSettings.threshold,
+  );
 
   await prisma.user.create({
     data: {

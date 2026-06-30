@@ -1,222 +1,122 @@
 import "server-only";
 
-import { getOpenAIKey } from "@/lib/admin-settings";
+import { MALE_SET, FEMALE_SET } from "@/lib/icelandic-names";
 
 /**
  * Gender assessment for registrants. EkkiEinn.is is a men's support community,
- * so this heuristic (optionally augmented by an LLM) helps admins decide whom
- * to approve. The score is on a 0..1 scale where 1.0 = very likely male.
+ * so this score assists admin approval (and the optional auto-approval path).
  *
- * Nothing here is authoritative — it only assists a human decision and powers
- * a conservative auto-approval path for high-confidence male assessments.
+ * Score model (0..100, where 100 = very likely male), per the moderation spec:
+ *   - Name analysis     (weight 60%) — Icelandic name database
+ *   - Email analysis     (weight 20%) — name extracted from the email local-part
+ *   - Online lookup      (weight 20%) — genderize.io (free, no key, IS locale)
+ * A disabled or inconclusive check contributes a neutral 50.
  */
 
 export type GenderAssessment = "LIKELY_MALE" | "LIKELY_FEMALE" | "UNCERTAIN";
 
+export type AssessChecks = { name: boolean; email: boolean; online: boolean };
+
 export type AssessmentResult = {
   assessment: GenderAssessment;
   score: number; // 0..1, 1 = very likely male
-  details: string; // JSON string with reasoning
+  scorePercent: number; // 0..100
+  details: string; // JSON string with breakdown + reasons
 };
 
-// ~100 common Icelandic male first names (lowercased).
-const MALE_NAMES = new Set(
-  [
-    "jón","sigurður","guðmundur","gunnar","ólafur","einar","kristján","magnús",
-    "stefán","jóhann","björn","árni","helgi","bjarni","þór","þórður","ragnar",
-    "halldór","hjalti","páll","pétur","davíð","daníel","aron","alexander","andri",
-    "arnar","atli","baldur","benedikt","birgir","bragi","egill","eiður","elvar",
-    "emil","eyþór","finnur","friðrik","garðar","gísli","grétar","guðjón","guðni",
-    "gylfi","hafþór","hannes","haraldur","haukur","heiðar","hilmar","hörður",
-    "ingi","ingvar","ívar","jakob","jens","jóhannes","karl","kjartan","kristinn",
-    "kristófer","lárus","logi","markús","marteinn","mikael","njáll","óðinn",
-    "óskar","ottó","rafn","reynir","róbert","rúnar","sigmar","sigþór","skúli",
-    "snorri","sturla","svavar","sveinn","tómas","tryggvi","valur","viðar","víðir",
-    "vignir","vilhjálmur","ægir","örn","þorsteinn","þorvaldur","þröstur",
-    "sebastian","patrekur","brynjar","dagur","hákon","ísak","kári","leó","sindri",
-    "steinar","þórir","gauti","valdimar","gunnlaugur",
-  ].map((n) => n.toLowerCase()),
-);
+const DEFAULT_CHECKS: AssessChecks = { name: true, email: true, online: true };
 
-// ~100 common Icelandic female first names (lowercased).
-const FEMALE_NAMES = new Set(
-  [
-    "guðrún","anna","kristín","margrét","sigríður","helga","sigrún","ingibjörg",
-    "jóhanna","maría","elín","katrín","hildur","ragnheiður","ásdís","erla","halla",
-    "hanna","birna","berglind","bryndís","dagný","edda","eva","fanney","freyja",
-    "gerður","guðbjörg","guðný","hafdís","harpa","heiða","hrafnhildur","hrund",
-    "inga","íris","jóna","karen","kolbrún","lára","lilja","linda","lóa","magnea",
-    "ólöf","rakel","rebekka","rós","rósa","sandra","sara","selma","sif","sólveig",
-    "steinunn","svala","sæunn","telma","thelma","tinna","unnur","valgerður",
-    "vigdís","þóra","þórdís","þórunn","ágústa","ásta","bára","bergþóra","brynhildur",
-    "dóra","elísabet","emilía","erna","eydís","gígja","guðlaug","gunnhildur","hekla",
-    "herdís","hólmfríður","hrefna","klara","kristjana","laufey","lovísa","nanna",
-    "oddný","perla","ragna","salka","sigurlaug","sunna","vala","aldís","andrea",
-    "diljá","embla","ásgerður","fríða","jódís",
-  ].map((n) => n.toLowerCase()),
-);
-
-// Known disposable / throwaway email providers — flag for manual review.
-const DISPOSABLE_DOMAINS = new Set([
-  "mailinator.com","guerrillamail.com","10minutemail.com","tempmail.com",
-  "temp-mail.org","trashmail.com","yopmail.com","getnada.com","dispostable.com",
-  "throwawaymail.com","maildrop.cc","sharklasers.com","fakeinbox.com",
-  "mailnesia.com","mvrht.com","spam4.me","tempinbox.com","mintemail.com",
-]);
-
-function tokens(name: string): string[] {
-  return name
-    .trim()
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean);
+function firstToken(name: string): string {
+  return name.trim().toLowerCase().split(/\s+/)[0] ?? "";
 }
 
-function scoreToAssessment(score: number): GenderAssessment {
-  if (score >= 0.6) return "LIKELY_MALE";
-  if (score <= 0.4) return "LIKELY_FEMALE";
-  return "UNCERTAIN";
+/** 100 = male name, 0 = female name, 50 = unknown/neutral. */
+function nameScoreFor(token: string): { score: number; reason: string } {
+  if (!token) return { score: 50, reason: "Ekkert nafn til greiningar." };
+  if (MALE_SET.has(token))
+    return { score: 100, reason: `"${token}" er þekkt karlmannsnafn.` };
+  if (FEMALE_SET.has(token))
+    return { score: 0, reason: `"${token}" er þekkt kvenmannsnafn.` };
+  return { score: 50, reason: `"${token}" fannst ekki í nafnaskrá (óvíst).` };
 }
 
-type HeuristicResult = {
-  score: number;
-  reasons: string[];
-  disposableEmail: boolean;
-};
-
-/** Pure name + email heuristic. No network calls. */
-export function heuristicAssess(name: string, email: string): HeuristicResult {
-  const reasons: string[] = [];
-  const parts = tokens(name);
-  const first = parts[0] ?? "";
-
-  // First-name match (strongest signal).
-  let firstSignal: "male" | "female" | null = null;
-  if (first && MALE_NAMES.has(first)) {
-    firstSignal = "male";
-    reasons.push(`Fornafn "${first}" er algengt karlmannsnafn.`);
-  } else if (first && FEMALE_NAMES.has(first)) {
-    firstSignal = "female";
-    reasons.push(`Fornafn "${first}" er algengt kvenmannsnafn.`);
+/** Look at the email local-part for a recognisable first name. */
+function emailScoreFor(email: string): { score: number; reason: string } {
+  const local = email.split("@")[0]?.toLowerCase() ?? "";
+  const tokens = local.split(/[^a-záéíóúýþæöð]+/i).filter((t) => t.length >= 3);
+  for (const t of tokens) {
+    if (MALE_SET.has(t)) return { score: 100, reason: `Netfang inniheldur karlmannsnafn "${t}".` };
+    if (FEMALE_SET.has(t)) return { score: 0, reason: `Netfang inniheldur kvenmannsnafn "${t}".` };
   }
-
-  // Patronymic suffix on any token.
-  const hasSon = parts.some((p) => p.endsWith("son"));
-  const hasDottir = parts.some((p) => p.endsWith("dóttir") || p.endsWith("dottir"));
-  if (hasSon) reasons.push("Föðurnafn endar á \"-son\" (karlkyns).");
-  if (hasDottir) reasons.push("Föðurnafn endar á \"-dóttir\" (kvenkyns).");
-
-  // Combine into a 0..1 score (1 = male).
-  let score = 0.5;
-  if (firstSignal === "male") score = hasSon ? 0.95 : 0.85;
-  else if (firstSignal === "female") score = hasDottir ? 0.05 : 0.15;
-  else if (hasSon && !hasDottir) score = 0.8;
-  else if (hasDottir && !hasSon) score = 0.2;
-  else reasons.push("Ekkert afgerandi kynjamerki í nafni.");
-
-  // Conflicting signals → pull toward uncertain.
-  if (hasSon && hasDottir) {
-    score = 0.5;
-    reasons.push("Misvísandi merki (bæði -son og -dóttir).");
-  }
-
-  // Email domain heuristic (secondary).
-  const domain = email.split("@")[1]?.toLowerCase() ?? "";
-  const disposableEmail = DISPOSABLE_DOMAINS.has(domain);
-  if (disposableEmail) {
-    reasons.push(`Einnota netfangslén "${domain}" — krefst handvirkrar skoðunar.`);
-  }
-
-  return { score: Math.max(0, Math.min(1, score)), reasons, disposableEmail };
+  return { score: 50, reason: "Ekkert nafn greinanlegt í netfangi." };
 }
 
-type AiResult = {
-  likely_male: boolean;
-  confidence: number;
-  reasoning: string;
-};
+type GenderizeResult = { score: number; reason: string } | null;
 
-/** Optional LLM second opinion via OpenAI (skipped if no key configured). */
-async function aiAssess(name: string, email: string): Promise<AiResult | null> {
-  const key = await getOpenAIKey();
-  if (!key) return null;
+async function onlineScoreFor(token: string): Promise<GenderizeResult> {
+  if (!token || token.length < 2) return null;
   try {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${key}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "user",
-            content: `Given the name '${name}' and email '${email}', assess the likelihood this person is male. This is for a men's support community registration. Return JSON: {"likely_male": boolean, "confidence": number, "reasoning": string}`,
-          },
-        ],
-      }),
-    });
+    const res = await fetch(
+      `https://api.genderize.io/?name=${encodeURIComponent(token)}&country_id=IS`,
+      { signal: AbortSignal.timeout(4000) },
+    );
     if (!res.ok) return null;
     const data = await res.json();
-    const raw = data?.choices?.[0]?.message?.content ?? "";
-    const parsed = JSON.parse(raw);
-    if (typeof parsed?.likely_male !== "boolean") return null;
-    const confidence =
-      typeof parsed.confidence === "number"
-        ? Math.max(0, Math.min(1, parsed.confidence))
-        : 0.5;
-    return {
-      likely_male: parsed.likely_male,
-      confidence,
-      reasoning: String(parsed.reasoning ?? ""),
-    };
+    const prob = typeof data?.probability === "number" ? data.probability : 0;
+    if (data?.gender === "male")
+      return { score: 50 + prob * 50, reason: `genderize.io: karl (${Math.round(prob * 100)}%).` };
+    if (data?.gender === "female")
+      return { score: 50 - prob * 50, reason: `genderize.io: kona (${Math.round(prob * 100)}%).` };
+    return { score: 50, reason: "genderize.io: óvíst." };
   } catch {
     return null;
   }
 }
 
-/**
- * Full assessment: heuristic first, merged with an optional AI second opinion
- * (60% heuristic / 40% AI when AI is available).
- */
+function toAssessment(percent: number): GenderAssessment {
+  if (percent >= 60) return "LIKELY_MALE";
+  if (percent <= 40) return "LIKELY_FEMALE";
+  return "UNCERTAIN";
+}
+
 export async function assessGender(
   name: string,
   email: string,
+  checks: AssessChecks = DEFAULT_CHECKS,
 ): Promise<AssessmentResult> {
-  const h = heuristicAssess(name, email);
-  const ai = await aiAssess(name, email);
+  const token = firstToken(name);
+  const reasons: string[] = [];
 
-  let finalScore = h.score;
-  if (ai) {
-    // Convert the AI verdict to the same 0..1 (male) scale.
-    const aiScore = ai.likely_male
-      ? 0.5 + ai.confidence / 2
-      : 0.5 - ai.confidence / 2;
-    finalScore = 0.6 * h.score + 0.4 * aiScore;
-  }
-  finalScore = Math.max(0, Math.min(1, finalScore));
+  // Name (60%)
+  const nameRes = checks.name ? nameScoreFor(token) : null;
+  if (nameRes) reasons.push(nameRes.reason);
+  const nameScore = nameRes?.score ?? null;
+
+  // Email (20%)
+  const emailRes = checks.email ? emailScoreFor(email) : null;
+  if (emailRes) reasons.push(emailRes.reason);
+  const emailScore = emailRes?.score ?? null;
+
+  // Online (20%)
+  const onlineRes = checks.online ? await onlineScoreFor(token) : null;
+  if (onlineRes) reasons.push(onlineRes.reason);
+  else if (checks.online) reasons.push("Netleit ekki tiltæk (hlutlaust).");
+  const onlineScore = onlineRes?.score ?? null;
+
+  // Weighted final — a skipped/inconclusive check counts as neutral 50.
+  const finalScore =
+    0.6 * (nameScore ?? 50) + 0.2 * (emailScore ?? 50) + 0.2 * (onlineScore ?? 50);
+  const percent = Math.round(Math.max(0, Math.min(100, finalScore)));
 
   const details = JSON.stringify({
-    finalScore: Number(finalScore.toFixed(3)),
-    heuristic: {
-      score: Number(h.score.toFixed(3)),
-      reasons: h.reasons,
-      disposableEmail: h.disposableEmail,
-    },
-    ai: ai
-      ? {
-          likely_male: ai.likely_male,
-          confidence: ai.confidence,
-          reasoning: ai.reasoning,
-        }
-      : null,
+    breakdown: { nameScore, emailScore, onlineScore, finalScore: percent },
+    reasons,
   });
 
   return {
-    assessment: scoreToAssessment(finalScore),
-    score: Number(finalScore.toFixed(3)),
+    assessment: toAssessment(percent),
+    score: percent / 100,
+    scorePercent: percent,
     details,
   };
 }

@@ -13,7 +13,8 @@ export function assessmentTooltip(
   if (details) {
     try {
       const d = JSON.parse(details);
-      const reasons: string[] = d?.heuristic?.reasons ?? [];
+      // New format: { breakdown, reasons[] }. Old format: { heuristic: { reasons } }.
+      const reasons: string[] = d?.reasons ?? d?.heuristic?.reasons ?? [];
       lines.push(...reasons);
       if (d?.ai?.reasoning) lines.push(`AI: ${d.ai.reasoning}`);
     } catch {

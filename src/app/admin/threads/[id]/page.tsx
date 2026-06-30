@@ -12,6 +12,9 @@ import {
   clearReplyFlag,
   toggleThreadFlag,
   toggleThreadHidden,
+  approveThread,
+  rejectThread,
+  updateThreadContent,
 } from "@/app/admin/actions";
 import { authorLabel } from "@/lib/forum";
 import { formatDate } from "@/lib/utils";
@@ -58,6 +61,11 @@ export default async function AdminThreadDetail({
             {thread.title}
             {thread.isHidden && (
               <Badge variant="secondary" className="ml-2">Falinn</Badge>
+            )}
+            {thread.status === "PENDING_REVIEW" && (
+              <Badge className="ml-2 border-amber-500/40 bg-amber-500/15 text-amber-400">
+                Bíður yfirferðar
+              </Badge>
             )}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -138,15 +146,76 @@ export default async function AdminThreadDetail({
         </CardContent>
       </Card>
 
-      {/* Public content */}
+      {/* Moderation — pending review */}
+      {thread.status === "PENDING_REVIEW" && (
+        <Card className="mt-6 border-amber-500/40">
+          <CardHeader>
+            <CardTitle className="text-base text-amber-400">
+              Yfirferð efnis — nöfn fundust
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {thread.flaggedNames && (
+              <p className="text-sm">
+                Möguleg nöfn:{" "}
+                {(JSON.parse(thread.flaggedNames) as string[]).map((n) => (
+                  <span
+                    key={n}
+                    className="mx-0.5 inline-block rounded bg-amber-500/20 px-1.5 py-0.5 text-xs font-medium text-amber-200"
+                  >
+                    {n}
+                  </span>
+                ))}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <form action={approveThread}>
+                <input type="hidden" name="id" value={thread.id} />
+                <Button type="submit" variant="success" size="sm">
+                  Samþykkja og birta
+                </Button>
+              </form>
+              <form action={rejectThread} className="flex items-center gap-2">
+                <input type="hidden" name="id" value={thread.id} />
+                <input
+                  name="note"
+                  placeholder="Athugasemd til notanda (valfrjálst)"
+                  className="h-9 w-64 rounded-md border border-input bg-surface px-2 text-sm"
+                />
+                <Button type="submit" variant="outline" size="sm">
+                  Hafna og láta vita
+                </Button>
+              </form>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Public content — editable by admin (remove/replace names) */}
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle className="text-base">Texti þráðar (birtur)</CardTitle>
+          <CardTitle className="text-base">
+            Texti þráðar {thread.status === "PUBLISHED" ? "(birtur)" : "(óbirtur)"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
-            {thread.content}
-          </p>
+          <form action={updateThreadContent} className="space-y-3">
+            <input type="hidden" name="id" value={thread.id} />
+            <input
+              name="title"
+              defaultValue={thread.title}
+              className="h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm font-medium"
+            />
+            <textarea
+              name="content"
+              defaultValue={thread.content}
+              rows={8}
+              className="block w-full resize-y rounded-lg border border-input bg-surface p-3 text-sm leading-relaxed text-foreground/90"
+            />
+            <Button type="submit" variant="outline" size="sm">
+              Vista texta
+            </Button>
+          </form>
         </CardContent>
       </Card>
 

@@ -6,13 +6,15 @@ import { cn } from "@/lib/utils";
 import { EmailSettings } from "./EmailSettings";
 import { ApiKeySettings } from "./ApiKeySettings";
 import { AiPromptSettings } from "./AiPromptSettings";
+import { RegistrationSettings } from "./RegistrationSettings";
 
-type Tab = "email" | "api-keys" | "ai-prompt";
+type Tab = "email" | "api-keys" | "ai-prompt" | "registration";
 
 const TABS: [Tab, string][] = [
   ["email", "Tölvupóstur"],
   ["api-keys", "API Lyklar"],
   ["ai-prompt", "AI Prompt"],
+  ["registration", "Skráningar"],
 ];
 
 export default function AdminSettingsV2Page() {
@@ -47,6 +49,7 @@ export default function AdminSettingsV2Page() {
         {tab === "email" && <EmailSettings />}
         {tab === "api-keys" && <ApiKeySettings />}
         {tab === "ai-prompt" && <AiPromptSettings />}
+        {tab === "registration" && <RegistrationSettings />}
       </div>
     </div>
   );
