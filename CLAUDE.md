@@ -39,3 +39,13 @@ Litaþema: background #0F1117, accent #F59E0B, text #F8F9FA.
 - Repo name is still "karlmenn" but all code uses ekkieinn.is
 - All email references must use info@ekkieinn.is
 - Push to main branch (no beta/prod split for this project)
+
+
+## Learned Rules (from past mistakes)
+- **DO NOT rename or delete existing CSS classes** — add new ones if needed, never rename
+- **DO NOT restructure working component initialization** — only add new props/sections
+- **ALWAYS run `npm run build` and verify ZERO errors before committing**
+- **ALWAYS verify the app loads in browser after deploy** (curl http://localhost:3002/admin)
+- **Only change files explicitly listed in the spec** — touch NOTHING else
+- **If build fails, FIX the error before committing** — never push broken code
+- **Push to beta branch ONLY — NEVER push to main**
