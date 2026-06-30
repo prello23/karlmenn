@@ -1,5 +1,7 @@
 import "server-only";
 
+import { getOpenAIKey } from "@/lib/admin-settings";
+
 /**
  * Name anonymization for forum content.
  *
@@ -89,7 +91,7 @@ async function anthropicFindNames(text: string): Promise<string[] | null> {
 }
 
 async function openaiFindNames(text: string): Promise<string[] | null> {
-  const key = process.env.OPENAI_API_KEY;
+  const key = await getOpenAIKey();
   if (!key) return null;
   try {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {

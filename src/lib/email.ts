@@ -3,19 +3,40 @@ import "server-only";
 import nodemailer from "nodemailer";
 
 import { getSetting } from "@/lib/settings";
+import { getDbSetting, getEmailConfig } from "@/lib/admin-settings";
 
-/** From header — prefers MAIL_FROM/MAIL_FROM_NAME, falls back to SMTP_FROM. */
-const FROM = process.env.MAIL_FROM
-  ? `"${process.env.MAIL_FROM_NAME ?? "EkkiEinn.is"}" <${process.env.MAIL_FROM}>`
-  : process.env.SMTP_FROM ?? "EkkiEinn.is <info@ekkieinn.is>";
+/** From header — DB email_from/email_from_name first, then env, then default. */
+async function getFrom(): Promise<string> {
+  const cfg = await getEmailConfig();
+  if (cfg.email_from) {
+    return `"${cfg.email_from_name || "EkkiEinn.is"}" <${cfg.email_from}>`;
+  }
+  return process.env.SMTP_FROM ?? "EkkiEinn.is <info@ekkieinn.is>";
+}
 
 /**
  * Builds the mail transport.
+ *  - A DB SMTP host (Stillingar → Tölvupóstur) takes precedence.
  *  - SMTP_USE_SENDMAIL=true  → local sendmail binary (no third-party service).
  *  - SMTP_HOST set           → SMTP server (localhost:25 etc).
  *  - otherwise               → null (dev fallback: content is logged).
  */
-function getTransport() {
+async function getTransport() {
+  // An SMTP host explicitly saved in the DB (Stillingar → Tölvupóstur) wins.
+  const dbHost = await getDbSetting("email_smtp_host");
+  if (dbHost) {
+    const cfg = await getEmailConfig();
+    return nodemailer.createTransport({
+      host: dbHost,
+      port: Number(cfg.email_smtp_port || 25),
+      secure: process.env.SMTP_SECURE === "true",
+      tls: { rejectUnauthorized: false },
+      auth: cfg.email_smtp_user
+        ? { user: cfg.email_smtp_user, pass: cfg.email_smtp_pass }
+        : undefined,
+    });
+  }
+
   if (process.env.SMTP_USE_SENDMAIL === "true") {
     return nodemailer.createTransport({
       sendmail: true,
@@ -53,15 +74,16 @@ export async function sendEmail({
   html?: string;
   text?: string;
 }) {
-  const transport = getTransport();
+  const transport = await getTransport();
   if (!transport) {
     console.info(
       `[email] (no transport configured) To: ${to}\n${subject}\n${text ?? html ?? ""}`,
     );
     return;
   }
+  const from = await getFrom();
   try {
-    await transport.sendMail({ from: FROM, to, subject, html, text });
+    await transport.sendMail({ from, to, subject, html, text });
   } catch (err) {
     console.error("[email] send failed:", err);
   }

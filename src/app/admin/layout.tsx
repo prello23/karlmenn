@@ -8,6 +8,7 @@ import {
   FileText,
   ShieldAlert,
   Home,
+  Mail,
 } from "lucide-react";
 
 import { requireAdmin } from "@/lib/auth-helpers";
@@ -51,6 +52,12 @@ export default async function AdminLayout({
     { href: "/admin/notendur", label: "Notendur", icon: Users, badge: pendingUsers },
     { href: "/admin/flokkar", label: "Flokkar", icon: FolderTree, badge: 0 },
     { href: "/admin/stillingar", label: "Stillingar", icon: Settings, badge: 0 },
+    {
+      href: "/admin/settings",
+      label: "Tölvupóstur & API",
+      icon: Mail,
+      badge: 0,
+    },
   ];
 
   return (

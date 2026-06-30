@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Loader2, ImagePlus, X } from "lucide-react";
+import { Loader2, ImagePlus, X, Replace, Ruler, Trash2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { IconPicker } from "@/components/admin/icon-picker";
+import { ICON_SIZES, type IconSizeKey } from "@/lib/icons";
+
+const SIZE_KEYS = Object.keys(ICON_SIZES) as IconSizeKey[];
 
 /** A single toolbar button. */
 function TbBtn({
@@ -163,6 +167,16 @@ export function TipTapEditor({
 
   const [showImage, setShowImage] = useState(false);
 
+  // ---- Icon picker + click-to-edit floating toolbar ----
+  const [showIcon, setShowIcon] = useState(false);
+  const [iconMode, setIconMode] = useState<"insert" | "replace">("insert");
+  const activeIconRef = useRef<HTMLElement | null>(null);
+  const [floatPos, setFloatPos] = useState<{ top: number; left: number } | null>(
+    null,
+  );
+  const [showSizeMenu, setShowSizeMenu] = useState(false);
+  const savedRange = useRef<Range | null>(null);
+
   // Seed the contenteditable DOM from `html` whenever we (re)enter WYSIWYG
   // mode (and on first mount). Not keyed on `html`, so typing doesn't reset it.
   useEffect(() => {
@@ -210,6 +224,91 @@ export function TipTapEditor({
     );
   }
 
+  // ---- Icons ----
+  function openIconPicker() {
+    // Remember where the caret is so we can insert there after the modal closes.
+    const sel = window.getSelection();
+    savedRange.current =
+      sel && sel.rangeCount > 0 ? sel.getRangeAt(0).cloneRange() : null;
+    setIconMode("insert");
+    setShowIcon(true);
+  }
+
+  function handleIconResult(html: string) {
+    if (iconMode === "replace" && activeIconRef.current) {
+      activeIconRef.current.outerHTML = html;
+      activeIconRef.current = null;
+      handleInput();
+      return;
+    }
+    // Insert mode — restore caret then drop the icon in.
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (savedRange.current && sel) {
+      sel.removeAllRanges();
+      sel.addRange(savedRange.current);
+    }
+    exec("insertHTML", html);
+  }
+
+  function closeFloating() {
+    activeIconRef.current = null;
+    setFloatPos(null);
+    setShowSizeMenu(false);
+  }
+
+  function handleEditorClick(e: React.MouseEvent<HTMLDivElement>) {
+    const target = e.target as HTMLElement;
+    const icon = target.closest(
+      ".editor-icon, .shield-lg",
+    ) as HTMLElement | null;
+    if (icon && editorRef.current?.contains(icon)) {
+      activeIconRef.current = icon;
+      const r = icon.getBoundingClientRect();
+      setFloatPos({ top: r.top, left: r.left + r.width / 2 });
+      setShowSizeMenu(false);
+    } else {
+      closeFloating();
+    }
+  }
+
+  function resizeActiveIcon(px: number) {
+    const icon = activeIconRef.current;
+    if (!icon) return;
+    icon.setAttribute("width", String(px));
+    icon.setAttribute("height", String(px));
+    icon.style.width = `${px}px`;
+    icon.style.height = `${px}px`;
+    const r = icon.getBoundingClientRect();
+    setFloatPos({ top: r.top, left: r.left + r.width / 2 });
+    setShowSizeMenu(false);
+    handleInput();
+  }
+
+  function deleteActiveIcon() {
+    const icon = activeIconRef.current;
+    if (!icon) return;
+    // Remove an immediate icon-wrapper span if that's all that holds it.
+    const parent = icon.parentElement;
+    if (
+      parent &&
+      parent !== editorRef.current &&
+      parent.classList.contains("icon-wrapper")
+    ) {
+      parent.remove();
+    } else {
+      icon.remove();
+    }
+    closeFloating();
+    handleInput();
+  }
+
+  function replaceActiveIcon() {
+    setIconMode("replace");
+    setShowIcon(true);
+    setShowSizeMenu(false);
+  }
+
   return (
     <>
       {/* Toolbar */}
@@ -240,6 +339,9 @@ export function TipTapEditor({
         <TbBtn title="Mynd" onClick={() => setShowImage(true)}>
           🖼️ Mynd
         </TbBtn>
+        <TbBtn title="Ikon" onClick={openIconPicker}>
+          🎨 Ikon
+        </TbBtn>
         <TbBtn title="Hreinsa snið" onClick={() => exec("removeFormat")}>
           🔄 Hreinsa
         </TbBtn>
@@ -266,15 +368,73 @@ export function TipTapEditor({
           contentEditable
           suppressContentEditableWarning
           onInput={handleInput}
+          onClick={handleEditorClick}
           className="page-content min-h-[400px] rounded-b-lg border border-t-0 border-border bg-[hsl(225,21%,7%)] p-6 focus:outline-none"
           style={{ caretColor: "hsl(38, 92%, 50%)" }}
         />
+      )}
+
+      {/* Floating toolbar for an icon clicked inside the editor */}
+      {floatPos && !htmlMode && (
+        <div
+          className="fixed z-50 -translate-x-1/2 -translate-y-full"
+          style={{ top: floatPos.top - 8, left: floatPos.left }}
+        >
+          <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-xl">
+            <button
+              type="button"
+              title="Skipta um ikon"
+              onClick={replaceActiveIcon}
+              className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium hover:bg-secondary"
+            >
+              <Replace className="h-3.5 w-3.5" /> Skipta
+            </button>
+            <button
+              type="button"
+              title="Stærð"
+              onClick={() => setShowSizeMenu((s) => !s)}
+              className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium hover:bg-secondary"
+            >
+              <Ruler className="h-3.5 w-3.5" /> Stærð
+            </button>
+            <button
+              type="button"
+              title="Eyða"
+              onClick={deleteActiveIcon}
+              className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-xs font-medium text-destructive hover:bg-secondary"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Eyða
+            </button>
+          </div>
+          {showSizeMenu && (
+            <div className="mt-1 flex items-center gap-1 rounded-lg border border-border bg-card p-1 shadow-xl">
+              {SIZE_KEYS.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => resizeActiveIcon(ICON_SIZES[key])}
+                  className="h-7 min-w-8 rounded-md bg-surface px-2 text-xs font-semibold hover:bg-secondary"
+                >
+                  {key}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {showImage && (
         <ImageDialog
           onClose={() => setShowImage(false)}
           onInsert={insertImage}
+        />
+      )}
+
+      {showIcon && (
+        <IconPicker
+          mode={iconMode}
+          onClose={() => setShowIcon(false)}
+          onInsert={handleIconResult}
         />
       )}
     </>

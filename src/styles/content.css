@@ -324,3 +324,16 @@
   display: block;
   max-width: 100%;
 }
+
+/* Editor-inserted icons (icon picker). Inline by default; the wrapper span
+   keeps them aligned with surrounding text. A block-level wrapper (text-align)
+   can still center them on their own line. */
+.page-content .icon-wrapper {
+  line-height: 0;
+}
+.page-content svg.editor-icon,
+.page-content img.editor-icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0;
+}
