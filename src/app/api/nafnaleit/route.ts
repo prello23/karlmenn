@@ -12,12 +12,18 @@ export async function GET(req: Request) {
     return NextResponse.json({ found: false, query: name });
   }
 
-  // Case-insensitive exact match against the registry.
+  // Case-insensitive partial match against the registry.
   const rows = await prisma.perpetratorRegistry
     .findMany({ select: { name: true } })
     .catch(() => []);
   const target = name.toLowerCase();
-  const found = rows.some((r) => r.name.trim().toLowerCase() === target);
+  const found = rows.some((r) => {
+    const regName = r.name.trim().toLowerCase();
+    // Match if: search is substring of registered name, OR registered name is
+    // substring of search (so a lone first name matches a full registered name,
+    // and a full entered name matches too).
+    return regName.includes(target) || target.includes(regName);
+  });
 
   return NextResponse.json({ found, query: name });
 }
