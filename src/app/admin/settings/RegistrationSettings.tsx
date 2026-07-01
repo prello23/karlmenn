@@ -10,6 +10,7 @@ type Settings = {
   threshold: number;
   checks: { name: boolean; email: boolean; online: boolean };
   threadNameModeration: boolean;
+  hateSpeechKeywords: string;
 };
 
 type TestResult = {
@@ -170,12 +171,27 @@ export function RegistrationSettings() {
           />
         </div>
 
-        <div className="mt-5 border-t border-border pt-4">
+        <div className="mt-5 space-y-3 border-t border-border pt-4">
           <Check
-            label="Sjálfvirk nafnagreining í þráðum (loka þráðum með nöfnum)"
+            label="Sjálfvirk efnisgreining í þráðum (loka þráðum með nöfnum/persónuupplýsingum)"
             value={s.threadNameModeration}
             onChange={(v) => setS({ ...s, threadNameModeration: v })}
           />
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium">
+              Bönnuð orð (haturstal) — eitt í línu eða aðskilið með kommu
+            </span>
+            <textarea
+              value={s.hateSpeechKeywords}
+              onChange={(e) => {
+                setS({ ...s, hateSpeechKeywords: e.target.value });
+                setSaved(false);
+              }}
+              rows={4}
+              placeholder="Skildu eftir tómt til að nota sjálfgefinn lista"
+              className="block w-full resize-y rounded-lg border border-input bg-surface p-2 text-sm focus:border-primary focus:outline-none"
+            />
+          </label>
         </div>
 
         <div className="mt-4 flex items-center gap-3">

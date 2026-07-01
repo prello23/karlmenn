@@ -123,11 +123,12 @@ model Thread {
   aiSuggestions      String?
   upvotes            Int     @default(0)
 
-  // Content moderation: PUBLISHED | PENDING_REVIEW | HIDDEN | DRAFT.
-  // PENDING_REVIEW threads are held (not public) until an admin approves.
-  status         String  @default("PUBLISHED")
+  // Content moderation: pending | approved | rejected.
+  // Threads are NOT public until approved (by AI auto-approval or an admin).
+  status         String  @default("pending")
   flaggedNames   String? // JSON array of detected name surface-forms
   moderationNote String? // admin note about why it was flagged / rejected
+  aiAnalysis     String? // JSON summary of the AI/heuristic content check
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -62,9 +62,14 @@ export default async function AdminThreadDetail({
             {thread.isHidden && (
               <Badge variant="secondary" className="ml-2">Falinn</Badge>
             )}
-            {thread.status === "PENDING_REVIEW" && (
+            {thread.status === "pending" && (
               <Badge className="ml-2 border-amber-500/40 bg-amber-500/15 text-amber-400">
-                Bíður yfirferðar
+                Bíður samþykktar
+              </Badge>
+            )}
+            {thread.status === "rejected" && (
+              <Badge variant="destructive" className="ml-2">
+                Hafnað
               </Badge>
             )}
           </h1>
@@ -146,15 +151,32 @@ export default async function AdminThreadDetail({
         </CardContent>
       </Card>
 
-      {/* Moderation — pending review */}
-      {thread.status === "PENDING_REVIEW" && (
+      {/* Moderation — anything not yet approved */}
+      {thread.status !== "approved" && (
         <Card className="mt-6 border-amber-500/40">
           <CardHeader>
             <CardTitle className="text-base text-amber-400">
-              Yfirferð efnis — nöfn fundust
+              Yfirferð efnis
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {(() => {
+              let reasons: string[] = [];
+              try {
+                reasons = thread.aiAnalysis
+                  ? (JSON.parse(thread.aiAnalysis)?.reasons ?? [])
+                  : [];
+              } catch {
+                reasons = [];
+              }
+              return reasons.length > 0 ? (
+                <ul className="list-inside list-disc text-sm text-amber-200">
+                  {reasons.map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
+                </ul>
+              ) : null;
+            })()}
             {thread.flaggedNames && (
               <p className="text-sm">
                 Möguleg nöfn:{" "}
@@ -195,7 +217,7 @@ export default async function AdminThreadDetail({
       <Card className="mt-6">
         <CardHeader>
           <CardTitle className="text-base">
-            Texti þráðar {thread.status === "PUBLISHED" ? "(birtur)" : "(óbirtur)"}
+            Texti þráðar {thread.status === "approved" ? "(birtur)" : "(óbirtur)"}
           </CardTitle>
         </CardHeader>
         <CardContent>

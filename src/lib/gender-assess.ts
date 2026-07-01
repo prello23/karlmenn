@@ -6,10 +6,11 @@ import { MALE_SET, FEMALE_SET } from "@/lib/icelandic-names";
  * Gender assessment for registrants. EkkiEinn.is is a men's support community,
  * so this score assists admin approval (and the optional auto-approval path).
  *
- * Score model (0..100, where 100 = very likely male), per the moderation spec:
+ * Score model (0..100, where 100 = very likely male), per the moderation
+ * addendum:
  *   - Name analysis     (weight 60%) — Icelandic name database
- *   - Email analysis     (weight 20%) — name extracted from the email local-part
- *   - Online lookup      (weight 20%) — genderize.io (free, no key, IS locale)
+ *   - Online lookup      (weight 30%) — genderize.io (free, no key, IS locale)
+ *   - Email analysis     (weight 10%) — name extracted from the email local-part
  * A disabled or inconclusive check contributes a neutral 50.
  */
 
@@ -105,7 +106,7 @@ export async function assessGender(
 
   // Weighted final — a skipped/inconclusive check counts as neutral 50.
   const finalScore =
-    0.6 * (nameScore ?? 50) + 0.2 * (emailScore ?? 50) + 0.2 * (onlineScore ?? 50);
+    0.6 * (nameScore ?? 50) + 0.3 * (onlineScore ?? 50) + 0.1 * (emailScore ?? 50);
   const percent = Math.round(Math.max(0, Math.min(100, finalScore)));
 
   const details = JSON.stringify({

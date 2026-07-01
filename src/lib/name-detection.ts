@@ -148,3 +148,27 @@ export function detectNameStrings(text: string): string[] {
 export function hasNames(text: string): boolean {
   return detectNames(text).length > 0;
 }
+
+/**
+ * Replace every detected name surface-form with the placeholder `[Nafn]`,
+ * preserving the rest of the text. Used to build the poster's "Tillaga".
+ */
+export function redactNames(text: string, placeholder = "[Nafn]"): string {
+  const detected = detectNames(text);
+  if (detected.length === 0) return text;
+  // Replace longer forms first to avoid partial overlaps.
+  const forms = Array.from(new Set(detected.map((d) => d.original))).sort(
+    (a, b) => b.length - a.length,
+  );
+  let out = text;
+  for (const form of forms) {
+    // Word-boundary-ish replace that respects Icelandic letters.
+    const re = new RegExp(`(?<![\\p{L}])${escapeRegExp(form)}(?![\\p{L}])`, "gu");
+    out = out.replace(re, placeholder);
+  }
+  return out;
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}

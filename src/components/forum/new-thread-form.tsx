@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useFormState } from "react-dom";
-import { Eye, ShieldCheck, Loader2, AlertTriangle } from "lucide-react";
+import { Eye, ShieldCheck, Loader2, AlertTriangle, Wand2 } from "lucide-react";
 
 import {
   createThread,
@@ -25,6 +25,9 @@ export function NewThreadForm({ categorySlug }: { categorySlug: string }) {
     namesFound: string[];
   } | null>(null);
   const [isPending, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const [autoSubmit, setAutoSubmit] = useState(false);
 
   function handlePreview() {
     startTransition(async () => {
@@ -33,8 +36,23 @@ export function NewThreadForm({ categorySlug }: { categorySlug: string }) {
     });
   }
 
+  // Accept the [Nafn] suggestion: replace the text and resubmit for re-check.
+  function acceptSuggestion() {
+    if (!state?.suggestion) return;
+    setContent(state.suggestion);
+    setAutoSubmit(true);
+  }
+
+  // After the content state has been applied to the DOM, submit the form.
+  useEffect(() => {
+    if (autoSubmit) {
+      setAutoSubmit(false);
+      formRef.current?.requestSubmit();
+    }
+  }, [autoSubmit, content]);
+
   return (
-    <form action={formAction} className="space-y-4">
+    <form ref={formRef} action={formAction} className="space-y-4">
       <input type="hidden" name="categorySlug" value={categorySlug} />
       <input
         type="hidden"
@@ -43,26 +61,54 @@ export function NewThreadForm({ categorySlug }: { categorySlug: string }) {
       />
 
       {state?.pendingReview && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
+        <div className="space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-4">
           <p className="flex items-center gap-2 text-sm font-semibold text-amber-500">
             <AlertTriangle className="h-4 w-4" />
-            Nöfn fundust í textanum
+            Þráðurinn bíður samþykktar
           </p>
-          <p className="mt-2 text-sm text-foreground/90">
-            Eftirfarandi orð gætu verið nöfn:{" "}
-            {state.flaggedNames?.map((n) => (
-              <span
-                key={n}
-                className="mx-0.5 inline-block rounded bg-amber-500/20 px-1.5 py-0.5 font-medium text-amber-200"
-              >
-                {n}
-              </span>
-            ))}
+          <p className="text-sm text-foreground/90">
+            Sjálfvirk yfirferð fann atriði sem þarf að laga áður en þráðurinn
+            birtist:
           </p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Vinsamlegast fjarlægðu eða breyttu nöfnum áður en þráðurinn birtist. Þú
-            getur notað dulnefni eða skammstafanir (t.d. &quot;J.&quot; eða
-            &quot;fyrrverandi mín&quot;). Breyttu textanum og sendu aftur.
+          {state.reasons && state.reasons.length > 0 && (
+            <ul className="list-inside list-disc text-sm text-amber-200">
+              {state.reasons.map((r, i) => (
+                <li key={i}>{r}</li>
+              ))}
+            </ul>
+          )}
+
+          {/* Tillaga — name replacement suggestion */}
+          {state.suggestion && state.suggestion !== content && (
+            <div className="rounded-md border border-amber-500/30 bg-background/40 p-3">
+              <p className="flex items-center gap-2 text-sm font-medium">
+                📝 Tillaga — nöfn skipt út fyrir <code>[Nafn]</code>:
+              </p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-foreground/90">
+                {state.suggestion}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={acceptSuggestion}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground"
+                >
+                  <Wand2 className="h-4 w-4" />
+                  Samþykkja tillögu
+                </button>
+                <button
+                  type="button"
+                  onClick={() => contentRef.current?.focus()}
+                  className="inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium hover:bg-secondary"
+                >
+                  Breyta sjálf/ur
+                </button>
+              </div>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Þú getur líka notað dulnefni eða skammstafanir (t.d. &quot;J.&quot; eða
+            &quot;fyrrverandi mín&quot;) og sent aftur.
           </p>
         </div>
       )}
@@ -77,6 +123,7 @@ export function NewThreadForm({ categorySlug }: { categorySlug: string }) {
         <Textarea
           id="content"
           name="content"
+          ref={contentRef}
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Deildu reynslu þinni eða spurningu..."

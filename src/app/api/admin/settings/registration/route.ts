@@ -22,6 +22,7 @@ const schema = z.object({
     online: z.boolean(),
   }),
   threadNameModeration: z.boolean(),
+  hateSpeechKeywords: z.string().max(5000).optional(),
 });
 
 // PUT /api/admin/settings/registration — save settings
@@ -52,6 +53,7 @@ export async function PUT(req: Request) {
     setDbSetting("auto_approve_check_email", String(d.checks.email)),
     setDbSetting("auto_approve_check_online", String(d.checks.online)),
     setDbSetting("thread_name_moderation", String(d.threadNameModeration)),
+    setDbSetting("hate_speech_keywords", d.hateSpeechKeywords ?? ""),
   ]);
 
   return NextResponse.json({ ok: true });

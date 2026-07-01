@@ -7,7 +7,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
 import { anonymizeText, detectNames } from "@/lib/ai-anonymize";
-import { detectNames as detectIcelandicNames } from "@/lib/name-detection";
+import { redactNames } from "@/lib/name-detection";
+import { checkContent } from "@/lib/content-check";
 import { sendAdminNotification } from "@/lib/email";
 import { getSetting } from "@/lib/settings";
 import { getDbSetting } from "@/lib/admin-settings";
@@ -43,6 +44,8 @@ export type ThreadState =
       error?: string;
       pendingReview?: boolean;
       flaggedNames?: string[];
+      reasons?: string[];
+      suggestion?: string;
       pendingThreadId?: string;
     }
   | undefined;
@@ -86,104 +89,101 @@ export async function createThread(
       return { error: "Flokkurinn fannst ekki." };
     }
 
-    // ---- Name-detection gate (privacy moderation) ----
+    // ---- AI/heuristic content check (names, kennitala, phone, hate speech) ----
     const moderationOn =
       (await getDbSetting("thread_name_moderation")) !== "false";
-    const detected = moderationOn ? detectIcelandicNames(`${title}\n${content}`) : [];
-    const flaggedNames = Array.from(new Set(detected.map((d) => d.original)));
+    const check = moderationOn
+      ? await checkContent(`${title}\n${content}`)
+      : {
+          clean: true,
+          names: [],
+          kennitala: [],
+          phones: [],
+          hateWords: [],
+          reasons: [],
+          suggestion: content,
+        };
 
-    if (flaggedNames.length > 0) {
-      // Hold for review — store/update as PENDING_REVIEW, never published yet.
-      if (pendingThreadId) {
-        const owned = await prisma.thread.findFirst({
-          where: { id: pendingThreadId, authorId: user.id },
-          select: { id: true },
-        });
-        if (owned) {
-          await prisma.thread.update({
-            where: { id: owned.id },
-            data: {
-              title,
-              content,
-              victimName: victimName || null,
-              perpetratorName: perpetratorName || null,
-              isAnonymous,
-              status: "PENDING_REVIEW",
-              needsReview: true,
-              flaggedNames: JSON.stringify(flaggedNames),
-            },
-          });
-          return { pendingReview: true, flaggedNames, pendingThreadId: owned.id };
-        }
-      }
-      const created = await prisma.thread.create({
-        data: {
-          categoryId: category.id,
-          authorId: user.id,
-          title,
-          content,
-          victimName: victimName || null,
-          perpetratorName: perpetratorName || null,
-          isAnonymous,
-          status: "PENDING_REVIEW",
-          needsReview: true,
-          flaggedNames: JSON.stringify(flaggedNames),
-        },
+    const baseData = {
+      title,
+      content,
+      victimName: victimName || null,
+      perpetratorName: perpetratorName || null,
+      isAnonymous,
+    };
+
+    // Resolve a resubmit target (must belong to this user).
+    const ownedId = pendingThreadId
+      ? (
+          await prisma.thread.findFirst({
+            where: { id: pendingThreadId, authorId: user.id },
+            select: { id: true },
+          })
+        )?.id
+      : undefined;
+
+    if (!check.clean) {
+      // Hold as `pending` (never public) and offer a [Nafn] suggestion.
+      const flaggedNames = check.names;
+      const aiAnalysis = JSON.stringify({
+        names: check.names,
+        kennitala: check.kennitala,
+        phones: check.phones,
+        hateWords: check.hateWords,
+        reasons: check.reasons,
       });
-      await notifyModeration("þræði", created.id);
-      return { pendingReview: true, flaggedNames, pendingThreadId: created.id };
+      const pendingData = {
+        ...baseData,
+        status: "pending",
+        needsReview: true,
+        flaggedNames: flaggedNames.length ? JSON.stringify(flaggedNames) : null,
+        aiAnalysis,
+      };
+
+      let id = ownedId;
+      if (id) {
+        await prisma.thread.update({ where: { id }, data: pendingData });
+      } else {
+        const created = await prisma.thread.create({
+          data: { categoryId: category.id, authorId: user.id, ...pendingData },
+        });
+        id = created.id;
+        await notifyModeration("þræði", id);
+      }
+      return {
+        pendingReview: true,
+        flaggedNames,
+        reasons: check.reasons,
+        suggestion: redactNames(content),
+        pendingThreadId: id,
+      };
     }
 
-    // ---- No names → publish (apply legacy anonymization safety net) ----
-    const mode = await getSetting("ai_moderation_mode");
-    const detection = await detectNames(content);
-    const storedContent = mode === "auto" ? detection.redacted : content;
-    const needsReview = mode !== "auto" && detection.has_names;
-
-    if (pendingThreadId) {
-      const owned = await prisma.thread.findFirst({
-        where: { id: pendingThreadId, authorId: user.id },
-        select: { id: true },
+    // ---- Clean → auto-approve (visible immediately) ----
+    if (ownedId) {
+      await prisma.thread.update({
+        where: { id: ownedId },
+        data: {
+          ...baseData,
+          status: "approved",
+          needsReview: false,
+          flaggedNames: null,
+          aiAnalysis: null,
+        },
       });
-      if (owned) {
-        await prisma.thread.update({
-          where: { id: owned.id },
-          data: {
-            title,
-            content: storedContent,
-            victimName: victimName || null,
-            perpetratorName: perpetratorName || null,
-            isAnonymous,
-            status: "PUBLISHED",
-            needsReview,
-            flaggedNames: null,
-            hasAnonymizedNames: mode === "auto" && detection.has_names,
-          },
-        });
-        revalidatePath(`/samfelag/${categorySlug}`);
-        redirect(`/samfelag/${categorySlug}/${owned.id}`);
-      }
+      revalidatePath(`/samfelag/${categorySlug}`);
+      redirect(`/samfelag/${categorySlug}/${ownedId}`);
     }
 
     const thread = await prisma.thread.create({
       data: {
         categoryId: category.id,
         authorId: user.id,
-        title,
-        content: storedContent,
-        victimName: victimName || null,
-        perpetratorName: perpetratorName || null,
-        isAnonymous,
-        hasAnonymizedNames: mode === "auto" && detection.has_names,
-        needsReview,
-        aiSuggestions: needsReview ? JSON.stringify(detection) : null,
+        ...baseData,
+        status: "approved",
       },
     });
     threadId = thread.id;
-
-    if (needsReview) {
-      await notifyModeration("þræði", threadId);
-    }
   } catch (err) {
     // redirect() throws a special error we must not swallow.
     if (

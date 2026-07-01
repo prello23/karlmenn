@@ -89,6 +89,7 @@ export type RegistrationSettings = {
   threshold: number; // percent 50..100
   checks: { name: boolean; email: boolean; online: boolean };
   threadNameModeration: boolean;
+  hateSpeechKeywords: string;
 };
 
 /** Registration auto-approval + content-moderation settings (DB-backed). */
@@ -105,6 +106,7 @@ export async function getRegistrationSettings(): Promise<RegistrationSettings> {
             "auto_approve_check_email",
             "auto_approve_check_online",
             "thread_name_moderation",
+            "hate_speech_keywords",
           ],
         },
       },
@@ -117,13 +119,14 @@ export async function getRegistrationSettings(): Promise<RegistrationSettings> {
   const threshold = Number(db.auto_approve_threshold);
   return {
     autoApproveEnabled: db.auto_approve_enabled !== "false", // default ON
-    threshold: Number.isFinite(threshold) ? Math.min(100, Math.max(50, threshold)) : 80,
+    threshold: Number.isFinite(threshold) ? Math.min(100, Math.max(50, threshold)) : 70,
     checks: {
       name: db.auto_approve_check_name !== "false",
       email: db.auto_approve_check_email !== "false",
       online: db.auto_approve_check_online !== "false",
     },
     threadNameModeration: db.thread_name_moderation !== "false", // default ON
+    hateSpeechKeywords: db.hate_speech_keywords ?? "",
   };
 }
 

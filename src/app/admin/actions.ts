@@ -63,7 +63,7 @@ export async function approveThread(formData: FormData) {
   await prisma.thread.update({
     where: { id },
     data: {
-      status: "PUBLISHED",
+      status: "approved",
       needsReview: false,
       flaggedNames: null,
     },
@@ -105,7 +105,7 @@ export async function rejectThread(formData: FormData) {
 
   const thread = await prisma.thread.update({
     where: { id },
-    data: { status: "PENDING_REVIEW", moderationNote: note || null },
+    data: { status: "rejected", moderationNote: note || null },
     include: { author: { select: { email: true } } },
   });
   console.log(`[admin] thread ${id} rejected with note`);

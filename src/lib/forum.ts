@@ -19,7 +19,7 @@ export async function getCategoriesWithCounts(): Promise<CategoryWithCount[]> {
       orderBy: { order: "asc" },
       include: {
         _count: {
-          select: { threads: { where: { isHidden: false, status: "PUBLISHED" } } },
+          select: { threads: { where: { isHidden: false, status: "approved" } } },
         },
       },
     });
@@ -57,7 +57,7 @@ const authorSelect = {
 export async function getThreads(categoryId: string) {
   try {
     return await prisma.thread.findMany({
-      where: { categoryId, isHidden: false, status: "PUBLISHED" },
+      where: { categoryId, isHidden: false, status: "approved" },
       orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
       include: {
         author: authorSelect,
