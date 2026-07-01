@@ -337,3 +337,28 @@
   vertical-align: middle;
   margin: 0;
 }
+
+/* Hero logo — large, centered with warm glow */
+.page-content .hero-logo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+.page-content .hero-logo {
+  width: clamp(160px, 25vw, 240px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 40px rgba(245, 158, 11, 0.35))
+          drop-shadow(0 0 80px rgba(245, 158, 11, 0.15));
+  animation: logo-glow 4s ease-in-out infinite alternate;
+}
+@keyframes logo-glow {
+  0% {
+    filter: drop-shadow(0 0 30px rgba(245, 158, 11, 0.25))
+            drop-shadow(0 0 60px rgba(245, 158, 11, 0.1));
+  }
+  100% {
+    filter: drop-shadow(0 0 50px rgba(245, 158, 11, 0.4))
+            drop-shadow(0 0 100px rgba(245, 158, 11, 0.2));
+  }
+}
