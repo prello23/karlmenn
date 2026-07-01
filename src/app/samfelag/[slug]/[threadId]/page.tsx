@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowUp, MessageSquare, Lock } from "lucide-react";
 
 import { Separator } from "@/components/ui/separator";
 import { ReplyForm } from "@/components/forum/reply-form";
+import { ThreadViewTracker } from "@/components/forum/thread-view-tracker";
 import { getThread, authorLabel } from "@/lib/forum";
 import { requireUser } from "@/lib/auth-helpers";
 import { formatDate } from "@/lib/utils";
@@ -42,6 +43,11 @@ export default async function ThreadPage({
 
   return (
     <section className="py-12">
+      <ThreadViewTracker
+        threadId={thread.id}
+        title={thread.title}
+        category={thread.category?.slug ?? slug}
+      />
       <div className="container max-w-3xl">
         <Link
           href={`/samfelag/${slug}`}

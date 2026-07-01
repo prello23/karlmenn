@@ -10,6 +10,7 @@ import {
   Home,
   Mail,
   ScrollText,
+  BarChart3,
 } from "lucide-react";
 
 import { requireAdmin } from "@/lib/auth-helpers";
@@ -53,6 +54,7 @@ export default async function AdminLayout({
     { href: "/admin/notendur", label: "Notendur", icon: Users, badge: pendingUsers },
     { href: "/admin/flokkar", label: "Flokkar", icon: FolderTree, badge: 0 },
     { href: "/admin/nafnaskra", label: "Nafnaskrá", icon: ScrollText, badge: 0 },
+    { href: "/admin/analytics", label: "Tölfræði", icon: BarChart3, badge: 0 },
     { href: "/admin/stillingar", label: "Stillingar", icon: Settings, badge: 0 },
     {
       href: "/admin/settings",

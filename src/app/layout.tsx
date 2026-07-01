@@ -13,6 +13,9 @@ const inter = Inter({
   display: "swap",
 });
 
+// Google Analytics 4 measurement ID.
+const GA_MEASUREMENT_ID = "G-LZK3TP8PPF";
+
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ?? "https://ekkieinn.is",
@@ -59,6 +62,19 @@ export default function RootLayout({
   return (
     <html lang="is" className="dark">
       <body className={`${inter.variable} font-sans`}>
+        {/* Google Analytics 4 (gtag.js) */}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          `}
+        </Script>
         <div className="flex min-h-dvh flex-col">
           <SiteHeader />
           <main className="flex-1">{children}</main>
