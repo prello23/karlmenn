@@ -1,0 +1,31 @@
+import type { Metadata } from "next";
+
+import { PageHero } from "@/components/page-hero";
+import { requireUser } from "@/lib/auth-helpers";
+import { NafnaleitClient } from "./NafnaleitClient";
+
+export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Nafnaleit",
+  description: "Flettu upp nafni í skránni.",
+};
+
+export default async function NafnaleitPage() {
+  await requireUser("/nafnaleit");
+
+  return (
+    <>
+      <PageHero
+        eyebrow="Nafnaleit"
+        title="Leita í skránni"
+        description="Sláðu inn nafn til að athuga hvort það sé skráð. Niðurstaðan er einfalt Já eða Nei — skráin sjálf er aldrei birt."
+      />
+      <section className="py-12">
+        <div className="container">
+          <NafnaleitClient />
+        </div>
+      </section>
+    </>
+  );
+}

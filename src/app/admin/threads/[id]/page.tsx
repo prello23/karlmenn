@@ -190,6 +190,37 @@ export default async function AdminThreadDetail({
                 ))}
               </p>
             )}
+
+            {/* Original (left) vs suggested [AAA] (right) */}
+            {thread.suggestedText && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Upprunalegur texti
+                  </p>
+                  <p className="whitespace-pre-wrap rounded-lg border border-border bg-surface/40 p-3 text-sm text-foreground/90">
+                    {thread.content}
+                  </p>
+                </div>
+                <div>
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Tillaga (nöfn fjarlægð)
+                  </p>
+                  <p className="whitespace-pre-wrap rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm text-foreground/90">
+                    {thread.suggestedText}
+                  </p>
+                  <form action={updateThreadContent} className="mt-2">
+                    <input type="hidden" name="id" value={thread.id} />
+                    <input type="hidden" name="title" value={thread.title} />
+                    <input type="hidden" name="content" value={thread.suggestedText} />
+                    <Button type="submit" variant="outline" size="sm">
+                      Nota tillögu sem texta
+                    </Button>
+                  </form>
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-2">
               <form action={approveThread}>
                 <input type="hidden" name="id" value={thread.id} />

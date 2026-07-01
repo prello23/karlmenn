@@ -125,19 +125,83 @@ export function detectNames(text: string): DetectedName[] {
     if (COMMON_WORD_EXCEPTIONS.has(lw)) continue;
 
     let base: string | undefined;
-    if (isCapitalized(word)) {
+    let surface = word; // the actual name-form found (may be a prefix)
+
+    if (FORM_MAP.has(lw) && (isCapitalized(word) || VERY_COMMON_FORM_SET.has(lw))) {
       base = FORM_MAP.get(lw);
-    } else if (VERY_COMMON_FORM_SET.has(lw)) {
-      base = FORM_MAP.get(lw);
+    } else if (isCapitalized(word) && lw.length > 4) {
+      // Compound / glued token (e.g. "Jóhönnubyrjaði" → "Jóhönnu"). Try the
+      // longest known name-form that the token STARTS with (min 4 chars).
+      for (let k = lw.length - 1; k >= 4; k--) {
+        const b = FORM_MAP.get(lw.slice(0, k));
+        if (b) {
+          base = b;
+          surface = word.slice(0, k);
+          break;
+        }
+      }
     }
 
-    if (base && !seen.has(lw)) {
-      seen.add(lw);
-      result.push({ original: word, base });
+    if (base && !seen.has(surface.toLowerCase())) {
+      seen.add(surface.toLowerCase());
+      result.push({ original: surface, base });
     }
   }
 
   return result;
+}
+
+// ---- Placeholder redaction ([AAA], [BBB], ...) -----------------------------
+
+function placeholderFor(index: number): string {
+  // 0 -> AAA, 1 -> BBB, ...
+  return String.fromCharCode(65 + (index % 26)).repeat(3);
+}
+
+export type Suggestion = {
+  suggestedText: string;
+  nameMap: Record<string, string>; // { "AAA": "Jóhanna", ... }
+  hasNames: boolean;
+};
+
+/**
+ * Replace every detected name (all declension/compound forms of the same base
+ * name) with a stable placeholder: first base → [AAA], second → [BBB], etc.
+ * Returns the cleaned text plus the placeholder→base map.
+ */
+export function buildSuggestion(text: string): Suggestion {
+  const detected = detectNames(text);
+  if (detected.length === 0) {
+    return { suggestedText: text, nameMap: {}, hasNames: false };
+  }
+
+  // Assign one placeholder letter per distinct base name.
+  const baseToPlaceholder = new Map<string, string>();
+  for (const d of detected) {
+    if (!baseToPlaceholder.has(d.base)) {
+      baseToPlaceholder.set(d.base, placeholderFor(baseToPlaceholder.size));
+    }
+  }
+
+  // Replace longer surface-forms first to avoid partial overlaps. No trailing
+  // boundary so glued compounds ("Jóhönnubyrjaði") lose only the name part.
+  const forms = Array.from(new Set(detected.map((d) => d.original))).sort(
+    (a, b) => b.length - a.length,
+  );
+  const formToBase = new Map<string, string>();
+  for (const d of detected) formToBase.set(d.original, d.base);
+
+  let out = text;
+  for (const form of forms) {
+    const letters = baseToPlaceholder.get(formToBase.get(form)!)!;
+    const re = new RegExp(`(?<![\\p{L}])${escapeRegExp(form)}`, "giu");
+    out = out.replace(re, `[${letters}]`);
+  }
+
+  const nameMap: Record<string, string> = {};
+  for (const [b, letters] of baseToPlaceholder) nameMap[letters] = b;
+
+  return { suggestedText: out, nameMap, hasNames: true };
 }
 
 /** Convenience: just the surface forms found (e.g. ["Jóhönnu", "Gunnari"]). */
@@ -149,24 +213,9 @@ export function hasNames(text: string): boolean {
   return detectNames(text).length > 0;
 }
 
-/**
- * Replace every detected name surface-form with the placeholder `[Nafn]`,
- * preserving the rest of the text. Used to build the poster's "Tillaga".
- */
-export function redactNames(text: string, placeholder = "[Nafn]"): string {
-  const detected = detectNames(text);
-  if (detected.length === 0) return text;
-  // Replace longer forms first to avoid partial overlaps.
-  const forms = Array.from(new Set(detected.map((d) => d.original))).sort(
-    (a, b) => b.length - a.length,
-  );
-  let out = text;
-  for (const form of forms) {
-    // Word-boundary-ish replace that respects Icelandic letters.
-    const re = new RegExp(`(?<![\\p{L}])${escapeRegExp(form)}(?![\\p{L}])`, "gu");
-    out = out.replace(re, placeholder);
-  }
-  return out;
+/** Cleaned text with names replaced by [AAA]/[BBB] (see buildSuggestion). */
+export function redactNames(text: string): string {
+  return buildSuggestion(text).suggestedText;
 }
 
 function escapeRegExp(s: string): string {

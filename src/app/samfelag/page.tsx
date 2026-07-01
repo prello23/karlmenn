@@ -32,6 +32,21 @@ export default async function ForumPage() {
 
       <section className="py-14">
         <div className="container">
+          <div className="mb-6 flex flex-wrap gap-3">
+            <Link
+              href="/minar-faerslur"
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:border-primary/40 hover:bg-surface"
+            >
+              <MessageSquare className="h-4 w-4" />
+              Mínar færslur
+            </Link>
+            <Link
+              href="/nafnaleit"
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:border-primary/40 hover:bg-surface"
+            >
+              🔍 Nafnaleit
+            </Link>
+          </div>
           <div className="grid gap-4">
             {categories.map((category) => (
               <Link

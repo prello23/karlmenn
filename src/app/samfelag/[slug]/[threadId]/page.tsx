@@ -26,10 +26,19 @@ export default async function ThreadPage({
 }: {
   params: Promise<{ slug: string; threadId: string }>;
 }) {
-  await requireUser();
+  const viewer = await requireUser();
   const { slug, threadId } = await params;
   const thread = await getThread(threadId);
-  if (!thread || thread.isHidden || thread.status !== "approved") notFound();
+  const isOwner = thread?.authorId === viewer.id;
+  const isAdmin = viewer.role === "ADMIN";
+  // Non-approved threads are visible only to their author or an admin.
+  if (
+    !thread ||
+    thread.isHidden ||
+    (thread.status !== "approved" && !isOwner && !isAdmin)
+  ) {
+    notFound();
+  }
 
   return (
     <section className="py-12">
@@ -41,6 +50,35 @@ export default async function ThreadPage({
           <ArrowLeft className="h-4 w-4" />
           Til baka
         </Link>
+
+        {thread.status !== "approved" && (
+          <div
+            className={`mt-6 rounded-xl border p-4 text-sm ${
+              thread.status === "rejected"
+                ? "border-destructive/40 bg-destructive/10 text-destructive"
+                : "border-amber-500/40 bg-amber-500/10 text-amber-300"
+            }`}
+          >
+            <p className="font-semibold">
+              {thread.status === "rejected"
+                ? "🔴 Þessari færslu var hafnað"
+                : "🟡 Þessi færsla bíður samþykktar og er ekki sýnileg öðrum"}
+            </p>
+            {thread.moderationReason && (
+              <p className="mt-1">Ástæða: {thread.moderationReason}</p>
+            )}
+            {thread.moderationNote && (
+              <p className="mt-1">Athugasemd stjórnanda: {thread.moderationNote}</p>
+            )}
+            <p className="mt-1">
+              Þú getur breytt færslunni á{" "}
+              <Link href="/minar-faerslur" className="underline">
+                Mínar færslur
+              </Link>
+              .
+            </p>
+          </div>
+        )}
 
         {/* Original post */}
         <article className="mt-6 rounded-2xl border border-border bg-card p-7">

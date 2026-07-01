@@ -125,10 +125,13 @@ model Thread {
 
   // Content moderation: pending | approved | rejected.
   // Threads are NOT public until approved (by AI auto-approval or an admin).
-  status         String  @default("pending")
-  flaggedNames   String? // JSON array of detected name surface-forms
-  moderationNote String? // admin note about why it was flagged / rejected
-  aiAnalysis     String? // JSON summary of the AI/heuristic content check
+  status           String  @default("pending")
+  flaggedNames     String? // JSON array of detected name surface-forms
+  moderationNote   String? // admin note about why it was flagged / rejected
+  moderationReason String? // AI reason the thread was held (shown to author)
+  suggestedText    String? // content with names replaced by [AAA]/[BBB]
+  nameMap          String? // JSON: { "AAA": "Jóhanna", ... }
+  aiAnalysis       String? // JSON summary of the AI/heuristic content check
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -210,6 +213,16 @@ model Setting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+// ---- Perpetrator name registry (standalone lookup) -------------------------
+// A simple admin-maintained list. The public /nafnaleit page answers Já/Nei
+// for a queried name; the list itself is never exposed publicly.
+model PerpetratorRegistry {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  addedBy String?
+  addedAt DateTime @default(now())
 }
 
 // ---- Editable static pages (managed in /admin/pages) -----------------------

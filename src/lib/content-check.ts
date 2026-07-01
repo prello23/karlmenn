@@ -1,6 +1,6 @@
 import "server-only";
 
-import { detectNames, redactNames } from "@/lib/name-detection";
+import { detectNames, buildSuggestion } from "@/lib/name-detection";
 import { getDbSetting } from "@/lib/admin-settings";
 
 /**
@@ -16,11 +16,14 @@ import { getDbSetting } from "@/lib/admin-settings";
 export type ContentCheck = {
   clean: boolean;
   names: string[]; // detected name surface forms
+  baseNames: string[]; // distinct base names (e.g. "Jóhanna")
   kennitala: string[];
   phones: string[];
   hateWords: string[];
   reasons: string[]; // human-readable Icelandic summary
-  suggestion: string; // text with names replaced by [Nafn]
+  moderationReason: string; // short reason string stored on the thread
+  suggestion: string; // text with names replaced by [AAA]/[BBB]
+  nameMap: Record<string, string>; // { "AAA": "Jóhanna", ... }
 };
 
 const DEFAULT_HATE_WORDS = [
@@ -53,10 +56,13 @@ async function getHateWords(): Promise<string[]> {
 export async function checkContent(text: string): Promise<ContentCheck> {
   const reasons: string[] = [];
 
-  // Names
+  // Names (+ [AAA] suggestion & placeholder map)
   const detected = detectNames(text);
   const names = Array.from(new Set(detected.map((d) => d.original)));
-  if (names.length) reasons.push(`Möguleg nöfn: ${names.join(", ")}`);
+  const baseNames = Array.from(new Set(detected.map((d) => d.base)));
+  const { suggestedText, nameMap } = buildSuggestion(text);
+  if (baseNames.length)
+    reasons.push(`Nafn fannst í texta: ${baseNames.join(", ")}`);
 
   // Kennitala
   const kennitala = Array.from(new Set(text.match(KENNITALA_RE) ?? []));
@@ -85,11 +91,14 @@ export async function checkContent(text: string): Promise<ContentCheck> {
   return {
     clean,
     names,
+    baseNames,
     kennitala,
     phones,
     hateWords,
     reasons,
-    suggestion: redactNames(text),
+    moderationReason: reasons.join(" · "),
+    suggestion: suggestedText,
+    nameMap,
   };
 }
 

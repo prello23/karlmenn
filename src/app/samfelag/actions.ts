@@ -7,7 +7,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
 import { anonymizeText, detectNames } from "@/lib/ai-anonymize";
-import { redactNames } from "@/lib/name-detection";
+import { buildSuggestion } from "@/lib/name-detection";
 import { checkContent } from "@/lib/content-check";
 import { sendAdminNotification } from "@/lib/email";
 import { getSetting } from "@/lib/settings";
@@ -97,11 +97,14 @@ export async function createThread(
       : {
           clean: true,
           names: [],
+          baseNames: [],
           kennitala: [],
           phones: [],
           hateWords: [],
           reasons: [],
+          moderationReason: "",
           suggestion: content,
+          nameMap: {},
         };
 
     const baseData = {
@@ -123,8 +126,10 @@ export async function createThread(
       : undefined;
 
     if (!check.clean) {
-      // Hold as `pending` (never public) and offer a [Nafn] suggestion.
+      // Hold as `pending` (never public) and offer an [AAA] suggestion built
+      // from the content body (what gets published).
       const flaggedNames = check.names;
+      const sugg = buildSuggestion(content);
       const aiAnalysis = JSON.stringify({
         names: check.names,
         kennitala: check.kennitala,
@@ -137,6 +142,9 @@ export async function createThread(
         status: "pending",
         needsReview: true,
         flaggedNames: flaggedNames.length ? JSON.stringify(flaggedNames) : null,
+        moderationReason: check.moderationReason || null,
+        suggestedText: sugg.hasNames ? sugg.suggestedText : null,
+        nameMap: sugg.hasNames ? JSON.stringify(sugg.nameMap) : null,
         aiAnalysis,
       };
 
@@ -154,7 +162,7 @@ export async function createThread(
         pendingReview: true,
         flaggedNames,
         reasons: check.reasons,
-        suggestion: redactNames(content),
+        suggestion: sugg.suggestedText,
         pendingThreadId: id,
       };
     }
@@ -168,6 +176,9 @@ export async function createThread(
           status: "approved",
           needsReview: false,
           flaggedNames: null,
+          moderationReason: null,
+          suggestedText: null,
+          nameMap: null,
           aiAnalysis: null,
         },
       });
