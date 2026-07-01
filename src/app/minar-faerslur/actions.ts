@@ -5,11 +5,14 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
 import { checkContent } from "@/lib/content-check";
+import { decideContentStatus } from "@/lib/aiModeration";
 import { buildSuggestion } from "@/lib/name-detection";
 
 /**
- * Re-run the content check on the author's (possibly edited) text. If clean →
- * approve and publish; otherwise keep it pending with a fresh suggestion.
+ * Re-run the content check on the author's (possibly edited) text — heuristic
+ * (names, PII, hate words) plus AI analysis. If the combined verdict is clean →
+ * approve and publish; otherwise keep it pending/rejected with a fresh
+ * suggestion.
  */
 async function rescanAndSave(threadId: string, ownerId: string, content: string) {
   const thread = await prisma.thread.findFirst({
@@ -18,8 +21,9 @@ async function rescanAndSave(threadId: string, ownerId: string, content: string)
   if (!thread) return;
 
   const check = await checkContent(`${thread.title}\n${content}`);
+  const decision = await decideContentStatus(`${thread.title}\n${content}`, check);
 
-  if (check.clean) {
+  if (decision.status === "approved") {
     await prisma.thread.update({
       where: { id: threadId },
       data: {
@@ -30,7 +34,7 @@ async function rescanAndSave(threadId: string, ownerId: string, content: string)
         moderationReason: null,
         suggestedText: null,
         nameMap: null,
-        aiAnalysis: null,
+        aiAnalysis: decision.aiAnalysis,
       },
     });
   } else {
@@ -39,12 +43,13 @@ async function rescanAndSave(threadId: string, ownerId: string, content: string)
       where: { id: threadId },
       data: {
         content,
-        status: "pending",
-        needsReview: true,
+        status: decision.status,
+        needsReview: decision.status === "pending",
         flaggedNames: check.names.length ? JSON.stringify(check.names) : null,
-        moderationReason: check.moderationReason || null,
+        moderationReason: decision.moderationReason,
         suggestedText: sugg.hasNames ? sugg.suggestedText : null,
         nameMap: sugg.hasNames ? JSON.stringify(sugg.nameMap) : null,
+        aiAnalysis: decision.aiAnalysis,
       },
     });
   }

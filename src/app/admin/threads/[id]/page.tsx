@@ -151,6 +151,92 @@ export default async function AdminThreadDetail({
         </CardContent>
       </Card>
 
+      {/* AI content analysis (GPT) — shown whenever a verdict was stored */}
+      {(() => {
+        let ai: {
+          safe?: boolean;
+          confidence?: number;
+          categories?: string[];
+          reasoning?: string;
+          suggestedAction?: string;
+          provider?: string;
+          error?: boolean;
+        } | null = null;
+        try {
+          ai = thread.aiAnalysis ? JSON.parse(thread.aiAnalysis)?.ai ?? null : null;
+        } catch {
+          ai = null;
+        }
+        if (!ai) return null;
+
+        if (ai.error) {
+          return (
+            <Card className="mt-6 border-destructive/40">
+              <CardHeader>
+                <CardTitle className="text-base text-destructive">
+                  AI greining
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-destructive">
+                  AI greining mistókst — handvirk yfirferð nauðsynleg.
+                </p>
+              </CardContent>
+            </Card>
+          );
+        }
+
+        return (
+          <Card className="mt-6 border-primary/30">
+            <CardHeader>
+              <CardTitle className="text-base">AI mat á efni</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {ai.safe ? (
+                  <Badge className="border-emerald-500/40 bg-emerald-500/15 text-emerald-400">
+                    AI mat: Leyfilegt ✅
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive">AI mat: Hafnað ❌</Badge>
+                )}
+                {typeof ai.confidence === "number" && (
+                  <Badge variant="secondary">Vissa: {ai.confidence}%</Badge>
+                )}
+                {ai.suggestedAction && (
+                  <Badge variant="secondary">
+                    Tillaga: {ai.suggestedAction}
+                  </Badge>
+                )}
+                {ai.provider && (
+                  <span className="text-xs text-muted-foreground">
+                    {ai.provider}
+                  </span>
+                )}
+              </div>
+              {ai.categories && ai.categories.length > 0 && (
+                <p className="text-sm">
+                  Flokkar:{" "}
+                  {ai.categories.map((c) => (
+                    <span
+                      key={c}
+                      className="mx-0.5 inline-block rounded bg-primary/15 px-1.5 py-0.5 text-xs font-medium text-primary"
+                    >
+                      {c}
+                    </span>
+                  ))}
+                </p>
+              )}
+              {ai.reasoning && (
+                <p className="whitespace-pre-wrap text-sm text-foreground/90">
+                  {ai.reasoning}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {/* Moderation — anything not yet approved */}
       {thread.status !== "approved" && (
         <Card className="mt-6 border-amber-500/40">

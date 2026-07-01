@@ -9,6 +9,7 @@ import { requireUser } from "@/lib/auth-helpers";
 import { anonymizeText, detectNames } from "@/lib/ai-anonymize";
 import { buildSuggestion } from "@/lib/name-detection";
 import { checkContent } from "@/lib/content-check";
+import { decideContentStatus, analyzeContentWithAI } from "@/lib/aiModeration";
 import { sendAdminNotification } from "@/lib/email";
 import { getSetting } from "@/lib/settings";
 import { getDbSetting } from "@/lib/admin-settings";
@@ -89,7 +90,7 @@ export async function createThread(
       return { error: "Flokkurinn fannst ekki." };
     }
 
-    // ---- AI/heuristic content check (names, kennitala, phone, hate speech) ----
+    // ---- Heuristic content check (names, kennitala, phone, hate speech) ----
     const moderationOn =
       (await getDbSetting("thread_name_moderation")) !== "false";
     const check = moderationOn
@@ -106,6 +107,12 @@ export async function createThread(
           suggestion: content,
           nameMap: {},
         };
+
+    // ---- AI content analysis (threats, harassment, hate speech, defamation,
+    // rule violations). Reads & understands the Icelandic text and combines its
+    // verdict with the heuristic check above to pick the final status. ----
+    const decision = await decideContentStatus(`${title}\n${content}`, check);
+    const { status } = decision;
 
     const baseData = {
       title,
@@ -125,27 +132,21 @@ export async function createThread(
         )?.id
       : undefined;
 
-    if (!check.clean) {
-      // Hold as `pending` (never public) and offer an [AAA] suggestion built
-      // from the content body (what gets published).
+    const sugg = buildSuggestion(content);
+
+    if (status !== "approved") {
+      // Held (`pending`) or auto-rejected (`rejected`) — never public. Offer an
+      // [AAA] suggestion built from the content body (what gets published).
       const flaggedNames = check.names;
-      const sugg = buildSuggestion(content);
-      const aiAnalysis = JSON.stringify({
-        names: check.names,
-        kennitala: check.kennitala,
-        phones: check.phones,
-        hateWords: check.hateWords,
-        reasons: check.reasons,
-      });
       const pendingData = {
         ...baseData,
-        status: "pending",
-        needsReview: true,
+        status,
+        needsReview: status === "pending",
         flaggedNames: flaggedNames.length ? JSON.stringify(flaggedNames) : null,
-        moderationReason: check.moderationReason || null,
+        moderationReason: decision.moderationReason,
         suggestedText: sugg.hasNames ? sugg.suggestedText : null,
         nameMap: sugg.hasNames ? JSON.stringify(sugg.nameMap) : null,
-        aiAnalysis,
+        aiAnalysis: decision.aiAnalysis,
       };
 
       let id = ownedId;
@@ -158,16 +159,24 @@ export async function createThread(
         id = created.id;
         await notifyModeration("þræði", id);
       }
+
+      const reasons = [...check.reasons];
+      if (decision.ai && !decision.ai.safe && decision.ai.reasoning) {
+        reasons.push(`AI: ${decision.ai.reasoning}`);
+      } else if (decision.aiFailed) {
+        reasons.push("AI greining mistókst — handvirk yfirferð nauðsynleg.");
+      }
+
       return {
         pendingReview: true,
         flaggedNames,
-        reasons: check.reasons,
+        reasons,
         suggestion: sugg.suggestedText,
         pendingThreadId: id,
       };
     }
 
-    // ---- Clean → auto-approve (visible immediately) ----
+    // ---- Approved → visible immediately ----
     if (ownedId) {
       await prisma.thread.update({
         where: { id: ownedId },
@@ -179,7 +188,7 @@ export async function createThread(
           moderationReason: null,
           suggestedText: null,
           nameMap: null,
-          aiAnalysis: null,
+          aiAnalysis: decision.aiAnalysis,
         },
       });
       revalidatePath(`/samfelag/${categorySlug}`);
@@ -192,6 +201,7 @@ export async function createThread(
         authorId: user.id,
         ...baseData,
         status: "approved",
+        aiAnalysis: decision.aiAnalysis,
       },
     });
     threadId = thread.id;
@@ -264,7 +274,30 @@ export async function createReply(
     // Manual mode (default): keep the text but flag for admin review.
     // Auto mode: redact names before saving.
     const storedContent = mode === "auto" ? detection.redacted : content;
-    const needsReview = mode !== "auto" && hasNames;
+    const nameNeedsReview = mode !== "auto" && hasNames;
+
+    // ---- AI content analysis of the comment (threats, harassment, etc.) ----
+    let aiFlagged = false;
+    let aiReason: string | null = null;
+    let aiJson: string | null = null;
+    if (mode !== "off") {
+      const outcome = await analyzeContentWithAI(content);
+      if (outcome.status === "ok") {
+        aiJson = JSON.stringify(outcome.result);
+        if (!outcome.result.safe || outcome.result.suggestedAction !== "approve") {
+          aiFlagged = true;
+          aiReason =
+            outcome.result.reasoning || "AI greindi mögulegt brot á reglum.";
+        }
+      } else if (outcome.status === "error") {
+        aiFlagged = true;
+        aiReason = "AI greining mistókst — handvirk yfirferð nauðsynleg.";
+      }
+    }
+
+    const needsReview = nameNeedsReview || aiFlagged;
+    const flagReason =
+      aiReason ?? (nameNeedsReview ? "Mögulegt mannsnafn í svari" : null);
 
     await prisma.reply.create({
       data: {
@@ -272,9 +305,10 @@ export async function createReply(
         authorId: user.id,
         content: storedContent,
         flagged: needsReview,
-        flagReason: needsReview ? "Mögulegt mannsnafn í svari" : null,
+        flagReason,
         needsReview,
-        aiSuggestions: needsReview ? JSON.stringify(detection) : null,
+        aiSuggestions:
+          aiJson ?? (nameNeedsReview ? JSON.stringify(detection) : null),
       },
     });
 
