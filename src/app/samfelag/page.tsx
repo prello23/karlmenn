@@ -44,7 +44,7 @@ export default async function ForumPage() {
               href="/nafnaleit"
               className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:border-primary/40 hover:bg-surface"
             >
-              🔍 Nafnaleit
+              🔍 Er Gerandi skráður
             </Link>
           </div>
           <div className="grid gap-4">

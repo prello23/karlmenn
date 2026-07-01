@@ -7,8 +7,8 @@ import { NafnaleitClient } from "./NafnaleitClient";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Nafnaleit",
-  description: "Flettu upp nafni í skránni.",
+  title: "Er Gerandi skráður",
+  description: "Athugaðu hvort nafn geranda sé skráð í gagnagrunn okkar.",
 };
 
 export default async function NafnaleitPage() {
@@ -17,8 +17,8 @@ export default async function NafnaleitPage() {
   return (
     <>
       <PageHero
-        eyebrow="Nafnaleit"
-        title="Leita í skránni"
+        eyebrow="Er Gerandi skráður"
+        title="Er nafn geranda skráð?"
         description="Sláðu inn nafn til að athuga hvort það sé skráð. Niðurstaðan er einfalt Já eða Nei — skráin sjálf er aldrei birt."
       />
       <section className="py-12">

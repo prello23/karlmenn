@@ -73,6 +73,31 @@ export const FEMALE_SET = new Set(
 );
 
 /**
+ * Fold an Icelandic name to plain ASCII so that accent-free spellings commonly
+ * used in email addresses (e.g. "johanna", "gudrun", "sigridur", "thorunn")
+ * still match their proper forms (Jóhanna, Guðrún, Sigríður, Þórunn).
+ */
+export function foldToAscii(s: string): string {
+  return s
+    .trim()
+    .toLowerCase()
+    .replace(/þ/g, "th")
+    .replace(/æ/g, "ae")
+    .replace(/ð/g, "d")
+    .replace(/ö/g, "o")
+    .replace(/[áàâ]/g, "a")
+    .replace(/é/g, "e")
+    .replace(/í/g, "i")
+    .replace(/ó/g, "o")
+    .replace(/[úü]/g, "u")
+    .replace(/ý/g, "y");
+}
+
+/** ASCII-folded lookups (e.g. "johanna" → matches "Jóhanna"). */
+export const MALE_SET_ASCII = new Set(MALE_NAMES.map(foldToAscii));
+export const FEMALE_SET_ASCII = new Set(FEMALE_NAMES.map(foldToAscii));
+
+/**
  * Common Icelandic words that begin sentences (and could be capitalised) but
  * are NOT names — never flag these even if capitalised.
  */

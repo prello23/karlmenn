@@ -1,6 +1,12 @@
 import "server-only";
 
-import { MALE_SET, FEMALE_SET } from "@/lib/icelandic-names";
+import {
+  MALE_SET,
+  FEMALE_SET,
+  MALE_SET_ASCII,
+  FEMALE_SET_ASCII,
+  foldToAscii,
+} from "@/lib/icelandic-names";
 
 /**
  * Gender assessment for registrants. EkkiEinn.is is a men's support community,
@@ -41,13 +47,23 @@ function nameScoreFor(token: string): { score: number; reason: string } {
   return { score: 50, reason: `"${token}" fannst ekki í nafnaskrá (óvíst).` };
 }
 
-/** Look at the email local-part for a recognisable first name. */
+/**
+ * Look at the email local-part for a recognisable first name. Handles numbers
+ * (johanna123 → johanna), dot/underscore separators (anna.maria → anna, maria)
+ * and accent-free spellings (johanna → Jóhanna) via the ASCII-folded name sets.
+ * A FEMALE name scores 0, a MALE name scores 100, otherwise a neutral 50.
+ */
 function emailScoreFor(email: string): { score: number; reason: string } {
   const local = email.split("@")[0]?.toLowerCase() ?? "";
+  // Split on anything that is not an Icelandic/Latin letter (drops digits,
+  // dots, underscores, plus-tags, etc.), keeping segments of length >= 3.
   const tokens = local.split(/[^a-záéíóúýþæöð]+/i).filter((t) => t.length >= 3);
   for (const t of tokens) {
-    if (MALE_SET.has(t)) return { score: 100, reason: `Netfang inniheldur karlmannsnafn "${t}".` };
-    if (FEMALE_SET.has(t)) return { score: 0, reason: `Netfang inniheldur kvenmannsnafn "${t}".` };
+    const ascii = foldToAscii(t);
+    if (MALE_SET.has(t) || MALE_SET_ASCII.has(ascii))
+      return { score: 100, reason: `Netfang inniheldur karlmannsnafn "${t}".` };
+    if (FEMALE_SET.has(t) || FEMALE_SET_ASCII.has(ascii))
+      return { score: 0, reason: `Netfang inniheldur kvenmannsnafn "${t}".` };
   }
   return { score: 50, reason: "Ekkert nafn greinanlegt í netfangi." };
 }

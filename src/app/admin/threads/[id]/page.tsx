@@ -18,6 +18,7 @@ import {
 } from "@/app/admin/actions";
 import { authorLabel } from "@/lib/forum";
 import { formatDate } from "@/lib/utils";
+import { ThreadContentEditor } from "@/components/admin/thread-content-editor";
 
 export const dynamic = "force-dynamic";
 
@@ -338,23 +339,11 @@ export default async function AdminThreadDetail({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={updateThreadContent} className="space-y-3">
-            <input type="hidden" name="id" value={thread.id} />
-            <input
-              name="title"
-              defaultValue={thread.title}
-              className="h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm font-medium"
-            />
-            <textarea
-              name="content"
-              defaultValue={thread.content}
-              rows={8}
-              className="block w-full resize-y rounded-lg border border-input bg-surface p-3 text-sm leading-relaxed text-foreground/90"
-            />
-            <Button type="submit" variant="outline" size="sm">
-              Vista texta
-            </Button>
-          </form>
+          <ThreadContentEditor
+            id={thread.id}
+            title={thread.title}
+            content={thread.content}
+          />
         </CardContent>
       </Card>
 
