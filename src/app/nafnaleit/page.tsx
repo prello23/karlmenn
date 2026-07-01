@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
 import { PageHero } from "@/components/page-hero";
-import { requireUser } from "@/lib/auth-helpers";
 import { NafnaleitClient } from "./NafnaleitClient";
 
 export const dynamic = "force-dynamic";
@@ -11,9 +10,7 @@ export const metadata: Metadata = {
   description: "Athugaðu hvort nafn geranda sé skráð í gagnagrunn okkar.",
 };
 
-export default async function NafnaleitPage() {
-  await requireUser("/nafnaleit");
-
+export default function NafnaleitPage() {
   return (
     <>
       <PageHero

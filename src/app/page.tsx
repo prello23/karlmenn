@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Search } from "lucide-react";
 
 import { DbPageFull, getPageMetadata } from "@/components/db-page";
+import { NafnaleitClient } from "./nafnaleit/NafnaleitClient";
 
 export const dynamic = "force-dynamic";
 
@@ -18,26 +17,21 @@ export default function HomePage() {
     <>
       <DbPageFull slug="forsida" fallbackTitle="Þú ert ekki einn" />
 
-      {/* Prominent link to the perpetrator-registry search */}
+      {/* Embedded perpetrator-registry search widget */}
       <section className="pb-16">
         <div className="container">
-          <Link
-            href="/nafnaleit"
-            className="group flex flex-col gap-4 rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary/40 hover:bg-surface sm:flex-row sm:items-center sm:gap-5"
-          >
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-surface">
-              <Search className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold">Er Gerandi skráður?</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Athugaðu hvort nafn geranda sé skráð í gagnagrunn okkar.
+          <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
+            <div className="mx-auto max-w-lg text-center">
+              <h2 className="text-2xl font-semibold">Er gerandi skráður?</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Sláðu inn nafn til að athuga hvort það sé skráð. Niðurstaðan er
+                einfalt Já eða Nei — skráin sjálf er aldrei birt.
               </p>
             </div>
-            <span className="text-sm font-medium text-primary group-hover:underline">
-              Leita →
-            </span>
-          </Link>
+            <div className="mt-6">
+              <NafnaleitClient />
+            </div>
+          </div>
         </div>
       </section>
     </>
