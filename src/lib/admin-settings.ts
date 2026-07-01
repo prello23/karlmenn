@@ -87,7 +87,7 @@ export async function getEmailConfig(): Promise<EmailConfig> {
 export type RegistrationSettings = {
   autoApproveEnabled: boolean;
   threshold: number; // percent 50..100
-  checks: { name: boolean; email: boolean; online: boolean };
+  checks: { name: boolean; email: boolean };
   threadNameModeration: boolean;
   hateSpeechKeywords: string;
 };
@@ -104,7 +104,6 @@ export async function getRegistrationSettings(): Promise<RegistrationSettings> {
             "auto_approve_threshold",
             "auto_approve_check_name",
             "auto_approve_check_email",
-            "auto_approve_check_online",
             "thread_name_moderation",
             "hate_speech_keywords",
           ],
@@ -123,7 +122,6 @@ export async function getRegistrationSettings(): Promise<RegistrationSettings> {
     checks: {
       name: db.auto_approve_check_name !== "false",
       email: db.auto_approve_check_email !== "false",
-      online: db.auto_approve_check_online !== "false",
     },
     threadNameModeration: db.thread_name_moderation !== "false", // default ON
     hateSpeechKeywords: db.hate_speech_keywords ?? "",

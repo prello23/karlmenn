@@ -98,6 +98,22 @@ export const MALE_SET_ASCII = new Set(MALE_NAMES.map(foldToAscii));
 export const FEMALE_SET_ASCII = new Set(FEMALE_NAMES.map(foldToAscii));
 
 /**
+ * Reverse lookups: a lowercased OR ASCII-folded key → the proper Icelandic
+ * spelling. Lets an email-prefix match ("johanna") be shown in its correct
+ * form ("Jóhanna") for the admin display.
+ */
+export const MALE_NAME_BY_KEY = new Map<string, string>();
+export const FEMALE_NAME_BY_KEY = new Map<string, string>();
+for (const n of MALE_NAMES) {
+  MALE_NAME_BY_KEY.set(n.trim().toLowerCase(), n);
+  MALE_NAME_BY_KEY.set(foldToAscii(n), n);
+}
+for (const n of FEMALE_NAMES) {
+  FEMALE_NAME_BY_KEY.set(n.trim().toLowerCase(), n);
+  FEMALE_NAME_BY_KEY.set(foldToAscii(n), n);
+}
+
+/**
  * Common Icelandic words that begin sentences (and could be capitalised) but
  * are NOT names — never flag these even if capitalised.
  */

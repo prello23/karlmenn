@@ -19,7 +19,6 @@ const schema = z.object({
   checks: z.object({
     name: z.boolean(),
     email: z.boolean(),
-    online: z.boolean(),
   }),
   threadNameModeration: z.boolean(),
   hateSpeechKeywords: z.string().max(5000).optional(),
@@ -51,7 +50,6 @@ export async function PUT(req: Request) {
     setDbSetting("auto_approve_threshold", String(Math.round(d.threshold))),
     setDbSetting("auto_approve_check_name", String(d.checks.name)),
     setDbSetting("auto_approve_check_email", String(d.checks.email)),
-    setDbSetting("auto_approve_check_online", String(d.checks.online)),
     setDbSetting("thread_name_moderation", String(d.threadNameModeration)),
     setDbSetting("hate_speech_keywords", d.hateSpeechKeywords ?? ""),
   ]);

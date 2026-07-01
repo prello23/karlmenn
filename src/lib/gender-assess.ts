@@ -5,6 +5,8 @@ import {
   FEMALE_SET,
   MALE_SET_ASCII,
   FEMALE_SET_ASCII,
+  MALE_NAME_BY_KEY,
+  FEMALE_NAME_BY_KEY,
   foldToAscii,
 } from "@/lib/icelandic-names";
 
@@ -12,17 +14,17 @@ import {
  * Gender assessment for registrants. EkkiEinn.is is a men's support community,
  * so this score assists admin approval (and the optional auto-approval path).
  *
- * Score model (0..100, where 100 = very likely male), per the moderation
- * addendum:
- *   - Name analysis     (weight 60%) — Icelandic name database
- *   - Online lookup      (weight 30%) — genderize.io (free, no key, IS locale)
- *   - Email analysis     (weight 10%) — name extracted from the email local-part
+ * Score model (0..100, where 100 = very likely male):
+ *   - Name analysis  (weight 50%) — entered name vs Icelandic name database
+ *   - Email analysis (weight 50%) — name extracted from the email local-part,
+ *                                   looked up in the Icelandic name database
+ *                                   (ASCII-folded, e.g. johanna → Jóhanna)
  * A disabled or inconclusive check contributes a neutral 50.
  */
 
 export type GenderAssessment = "LIKELY_MALE" | "LIKELY_FEMALE" | "UNCERTAIN";
 
-export type AssessChecks = { name: boolean; email: boolean; online: boolean };
+export type AssessChecks = { name: boolean; email: boolean };
 
 export type AssessmentResult = {
   assessment: GenderAssessment;
@@ -31,7 +33,7 @@ export type AssessmentResult = {
   details: string; // JSON string with breakdown + reasons
 };
 
-const DEFAULT_CHECKS: AssessChecks = { name: true, email: true, online: true };
+const DEFAULT_CHECKS: AssessChecks = { name: true, email: true };
 
 function firstToken(name: string): string {
   return name.trim().toLowerCase().split(/\s+/)[0] ?? "";
@@ -48,9 +50,10 @@ function nameScoreFor(token: string): { score: number; reason: string } {
 }
 
 /**
- * Look at the email local-part for a recognisable first name. Handles numbers
- * (johanna123 → johanna), dot/underscore separators (anna.maria → anna, maria)
- * and accent-free spellings (johanna → Jóhanna) via the ASCII-folded name sets.
+ * Look at the email local-part for a recognisable first name against the
+ * Icelandic name database. Handles numbers (johanna123 → johanna), dot/
+ * underscore separators (jon.gunnar → jon, gunnar) and accent-free spellings
+ * (johanna → Jóhanna, gudrun → Guðrún) via the ASCII-folded name sets.
  * A FEMALE name scores 0, a MALE name scores 100, otherwise a neutral 50.
  */
 function emailScoreFor(email: string): { score: number; reason: string } {
@@ -60,34 +63,17 @@ function emailScoreFor(email: string): { score: number; reason: string } {
   const tokens = local.split(/[^a-záéíóúýþæöð]+/i).filter((t) => t.length >= 3);
   for (const t of tokens) {
     const ascii = foldToAscii(t);
-    if (MALE_SET.has(t) || MALE_SET_ASCII.has(ascii))
-      return { score: 100, reason: `Netfang inniheldur karlmannsnafn "${t}".` };
-    if (FEMALE_SET.has(t) || FEMALE_SET_ASCII.has(ascii))
-      return { score: 0, reason: `Netfang inniheldur kvenmannsnafn "${t}".` };
+    if (MALE_SET.has(t) || MALE_SET_ASCII.has(ascii)) {
+      const proper = MALE_NAME_BY_KEY.get(t) ?? MALE_NAME_BY_KEY.get(ascii) ?? t;
+      return { score: 100, reason: `Netfang: "${t}" → ${proper} (karlmannsnafn).` };
+    }
+    if (FEMALE_SET.has(t) || FEMALE_SET_ASCII.has(ascii)) {
+      const proper =
+        FEMALE_NAME_BY_KEY.get(t) ?? FEMALE_NAME_BY_KEY.get(ascii) ?? t;
+      return { score: 0, reason: `Netfang: "${t}" → ${proper} (kvenmannsnafn).` };
+    }
   }
   return { score: 50, reason: "Ekkert nafn greinanlegt í netfangi." };
-}
-
-type GenderizeResult = { score: number; reason: string } | null;
-
-async function onlineScoreFor(token: string): Promise<GenderizeResult> {
-  if (!token || token.length < 2) return null;
-  try {
-    const res = await fetch(
-      `https://api.genderize.io/?name=${encodeURIComponent(token)}&country_id=IS`,
-      { signal: AbortSignal.timeout(4000) },
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const prob = typeof data?.probability === "number" ? data.probability : 0;
-    if (data?.gender === "male")
-      return { score: 50 + prob * 50, reason: `genderize.io: karl (${Math.round(prob * 100)}%).` };
-    if (data?.gender === "female")
-      return { score: 50 - prob * 50, reason: `genderize.io: kona (${Math.round(prob * 100)}%).` };
-    return { score: 50, reason: "genderize.io: óvíst." };
-  } catch {
-    return null;
-  }
 }
 
 function toAssessment(percent: number): GenderAssessment {
@@ -104,29 +90,22 @@ export async function assessGender(
   const token = firstToken(name);
   const reasons: string[] = [];
 
-  // Name (60%)
+  // Name (50%)
   const nameRes = checks.name ? nameScoreFor(token) : null;
   if (nameRes) reasons.push(nameRes.reason);
   const nameScore = nameRes?.score ?? null;
 
-  // Email (20%)
+  // Email (50%)
   const emailRes = checks.email ? emailScoreFor(email) : null;
   if (emailRes) reasons.push(emailRes.reason);
   const emailScore = emailRes?.score ?? null;
 
-  // Online (20%)
-  const onlineRes = checks.online ? await onlineScoreFor(token) : null;
-  if (onlineRes) reasons.push(onlineRes.reason);
-  else if (checks.online) reasons.push("Netleit ekki tiltæk (hlutlaust).");
-  const onlineScore = onlineRes?.score ?? null;
-
   // Weighted final — a skipped/inconclusive check counts as neutral 50.
-  const finalScore =
-    0.6 * (nameScore ?? 50) + 0.3 * (onlineScore ?? 50) + 0.1 * (emailScore ?? 50);
+  const finalScore = 0.5 * (nameScore ?? 50) + 0.5 * (emailScore ?? 50);
   const percent = Math.round(Math.max(0, Math.min(100, finalScore)));
 
   const details = JSON.stringify({
-    breakdown: { nameScore, emailScore, onlineScore, finalScore: percent },
+    breakdown: { nameScore, emailScore, finalScore: percent },
     reasons,
   });
 

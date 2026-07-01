@@ -40,13 +40,13 @@ export async function registerUser(input: {
   const passwordHash = await bcrypt.hash(input.password, 10);
   const token = newToken();
 
-  // Gender assessment (name + email + online lookup). Best-effort: never block
-  // registration on an assessment failure.
+  // Gender assessment (name + email lookup against the Icelandic name
+  // database). Best-effort: never block registration on an assessment failure.
   const regSettings = await getRegistrationSettings().catch(() => null);
   const assessment = await assessGender(
     name,
     email,
-    regSettings?.checks ?? { name: true, email: true, online: true },
+    regSettings?.checks ?? { name: true, email: true },
   ).catch(() => null);
 
   // Auto-approval: enabled + final score meets the admin-configured threshold.

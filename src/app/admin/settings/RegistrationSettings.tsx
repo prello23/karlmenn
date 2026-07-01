@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 type Settings = {
   autoApproveEnabled: boolean;
   threshold: number;
-  checks: { name: boolean; email: boolean; online: boolean };
+  checks: { name: boolean; email: boolean };
   threadNameModeration: boolean;
   hateSpeechKeywords: string;
 };
@@ -22,7 +22,6 @@ type TestResult = {
     breakdown: {
       nameScore: number | null;
       emailScore: number | null;
-      onlineScore: number | null;
       finalScore: number;
     };
     reasons: string[];
@@ -160,14 +159,9 @@ export function RegistrationSettings() {
             onChange={(v) => setS({ ...s, checks: { ...s.checks, name: v } })}
           />
           <Check
-            label="Tölvupóstgreining"
+            label="Tölvupóstgreining (íslensk nafnaskrá)"
             value={s.checks.email}
             onChange={(v) => setS({ ...s, checks: { ...s.checks, email: v } })}
-          />
-          <Check
-            label="Netleit (genderize.io)"
-            value={s.checks.online}
-            onChange={(v) => setS({ ...s, checks: { ...s.checks, online: v } })}
           />
         </div>
 
@@ -263,7 +257,6 @@ export function RegistrationSettings() {
             <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
               <li>Nafnaskor: {test.details.breakdown.nameScore ?? "—"}%</li>
               <li>Netfangsskor: {test.details.breakdown.emailScore ?? "—"}%</li>
-              <li>Netleitarskor: {test.details.breakdown.onlineScore ?? "—"}%</li>
             </ul>
             {test.details.reasons.length > 0 && (
               <ul className="mt-2 list-inside list-disc text-xs text-muted-foreground">

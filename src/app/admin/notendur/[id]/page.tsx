@@ -29,7 +29,6 @@ function GenderBreakdown({
     breakdown?: {
       nameScore: number | null;
       emailScore: number | null;
-      onlineScore: number | null;
       finalScore: number;
     };
     reasons?: string[];
@@ -49,7 +48,6 @@ function GenderBreakdown({
         <ul className="space-y-1 text-sm">
           <li>Nafnaskor: {b.nameScore ?? "—"}%</li>
           <li>Netfangsskor: {b.emailScore ?? "—"}%</li>
-          <li>Netleitarskor: {b.onlineScore ?? "—"}%</li>
           <li className="font-semibold">Lokaskor: {b.finalScore}%</li>
         </ul>
       ) : (
