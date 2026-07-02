@@ -234,7 +234,8 @@ model Page {
   menuTitle       String // Heiti í valmynd
   category        String   @default("") // flokkur: "about" | "legal" | "contact" | ""
   metaDescription String   @default("")
-  content         String   @default("") // HTML content
+  content         String   @default("") // HTML string (v1) or block JSON (v2)
+  contentVersion  Int      @default(1) // 1 = legacy HTML, 2 = block JSON
   updatedAt       DateTime @updatedAt
   createdAt       DateTime @default(now())
 }

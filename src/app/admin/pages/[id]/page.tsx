@@ -33,6 +33,7 @@ export default async function AdminEditPage({
             category: page.category,
             metaDescription: page.metaDescription,
             content: page.content,
+            contentVersion: page.contentVersion,
           }}
         />
       </div>

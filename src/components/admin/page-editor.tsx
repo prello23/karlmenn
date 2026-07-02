@@ -8,7 +8,7 @@ import { ExternalLink, Loader2, Trash2, ArrowLeft } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { TipTapEditor } from "@/components/admin/tiptap-editor";
+import { BlockEditor } from "@/components/admin/block-editor";
 
 type PageData = {
   id: number;
@@ -18,6 +18,7 @@ type PageData = {
   category: string;
   metaDescription: string;
   content: string;
+  contentVersion: number;
 };
 
 const CATEGORY_OPTIONS = [
@@ -35,6 +36,7 @@ function publicHref(slug: string): string {
 export function PageEditor({ page }: { page?: PageData }) {
   const router = useRouter();
   const isEdit = Boolean(page);
+  const pageKey = page?.id ? String(page.id) : "new";
 
   const [slug, setSlug] = useState(page?.slug ?? "");
   const [title, setTitle] = useState(page?.title ?? "");
@@ -43,6 +45,8 @@ export function PageEditor({ page }: { page?: PageData }) {
   const [metaDescription, setMetaDescription] = useState(
     page?.metaDescription ?? "",
   );
+  // Content is always stored as a V5 block JSON document (contentVersion 2).
+  // Legacy HTML pages are migrated on load (wrapped in a single html block).
   const [content, setContent] = useState(page?.content ?? "");
 
   const [saving, setSaving] = useState(false);
@@ -62,8 +66,23 @@ export function PageEditor({ page }: { page?: PageData }) {
           headers: { "content-type": "application/json" },
           body: JSON.stringify(
             isEdit
-              ? { title, menuTitle, category, metaDescription, content }
-              : { slug, title, menuTitle, category, metaDescription, content },
+              ? {
+                  title,
+                  menuTitle,
+                  category,
+                  metaDescription,
+                  content,
+                  contentVersion: 2,
+                }
+              : {
+                  slug,
+                  title,
+                  menuTitle,
+                  category,
+                  metaDescription,
+                  content,
+                  contentVersion: 2,
+                },
           ),
         },
       );
@@ -71,6 +90,12 @@ export function PageEditor({ page }: { page?: PageData }) {
         const data = await res.json().catch(() => ({}));
         setError(data.error ?? "Ekki tókst að vista.");
         return;
+      }
+      // Clear the local autosave draft — it's now persisted server-side.
+      try {
+        localStorage.removeItem(`ekkieinn:block-draft:${pageKey}`);
+      } catch {
+        /* ignore */
       }
       if (isEdit) {
         setSaved(true);
@@ -187,7 +212,12 @@ export function PageEditor({ page }: { page?: PageData }) {
 
         <div className="grid gap-2">
           <Label>Efni síðunnar</Label>
-          <TipTapEditor value={content} onChange={setContent} />
+          <BlockEditor
+            initialContent={page?.content ?? ""}
+            initialVersion={page?.contentVersion ?? 1}
+            pageKey={pageKey}
+            onDocChange={setContent}
+          />
         </div>
       </div>
 

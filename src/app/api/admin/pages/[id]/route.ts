@@ -34,6 +34,7 @@ const updateSchema = z.object({
   category: z.enum(["", "about", "legal", "contact"]).optional().default(""),
   metaDescription: z.string().trim().max(300).optional().default(""),
   content: z.string().optional().default(""),
+  contentVersion: z.union([z.literal(1), z.literal(2)]).optional(),
 });
 
 // PUT /api/admin/pages/[id] — update a page

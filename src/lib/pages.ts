@@ -10,6 +10,7 @@ export type PageRecord = {
   category: string;
   metaDescription: string;
   content: string;
+  contentVersion: number;
 };
 
 /** Fetch a single editable page by slug. Always hits the DB (no caching). */

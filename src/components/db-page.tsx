@@ -4,6 +4,8 @@ import { PageHero } from "@/components/page-hero";
 import { PageContent } from "@/components/page-content";
 import { getPage } from "@/lib/pages";
 import { SOGUR_TELJARI, injectCounterMounts } from "@/lib/shortcodes";
+import { parseDocument } from "@/lib/blocks";
+import { BlockRenderer } from "@/components/blocks/block-renderer";
 
 /**
  * Builds page metadata from the admin-editable Page record so title/description
@@ -39,6 +41,7 @@ export async function DbPageContent({
   const page = await getPage(slug);
   const heading = page?.menuTitle || fallbackTitle;
   const content = page?.content?.trim();
+  const isBlocks = page?.contentVersion === 2;
 
   return (
     <>
@@ -47,7 +50,18 @@ export async function DbPageContent({
         title={heading}
         description={!content ? fallbackDescription : undefined}
       />
-      {content && (
+      {content && isBlocks ? (
+        <section className="py-4">
+          <div className="container">
+            {(() => {
+              const doc = parseDocument(content, 2);
+              return (
+                <BlockRenderer blocks={doc.blocks} settings={doc.settings} />
+              );
+            })()}
+          </div>
+        </section>
+      ) : content ? (
         <section className="py-12">
           <div className="container max-w-3xl">
             {content.includes(SOGUR_TELJARI) ? (
@@ -60,7 +74,7 @@ export async function DbPageContent({
             )}
           </div>
         </section>
-      )}
+      ) : null}
     </>
   );
 }
@@ -82,6 +96,12 @@ export async function DbPageFull({
 
   if (!content) {
     return <PageHero title={page?.menuTitle || fallbackTitle || ""} />;
+  }
+
+  // V5 block document — render via the BlockRenderer.
+  if (page?.contentVersion === 2) {
+    const doc = parseDocument(content, 2);
+    return <BlockRenderer blocks={doc.blocks} settings={doc.settings} />;
   }
 
   // Full-bleed: the stored HTML carries its own .container/.hero/section layout

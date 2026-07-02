@@ -168,3 +168,10 @@
   pointer-events: none;
   color: hsl(var(--muted-foreground));
 }
+
+/* V5 block builder: columns stack vertically on small screens */
+@media (max-width: 640px) {
+  .block-columns {
+    grid-template-columns: 1fr !important;
+  }
+}
