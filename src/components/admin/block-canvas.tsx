@@ -33,20 +33,6 @@ interface Ctx {
   openInsert: (at: InsertAt) => void;
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  section: "Kafli",
-  columns: "Dálkar",
-  column: "Dálkur",
-  text: "Texti",
-  button: "Takki",
-  image: "Mynd",
-  spacer: "Bil",
-  counter: "Söguteljari",
-  divider: "Skiptilína",
-  card: "Kort",
-  html: "HTML",
-};
-
 function sectionStyle(p: Record<string, unknown>): CSSProperties {
   const style: CSSProperties = {
     padding: `${Number(p.padY ?? 40)}px ${Number(p.padX ?? 24)}px`,
@@ -186,20 +172,22 @@ function ChildList({
 
 function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
   const selected = ctx.selectedId === block.id;
-  const isContainer =
-    block.type === "section" || block.type === "card" || block.type === "columns";
 
+  // The visual body is rendered EXACTLY like the public site (block-renderer),
+  // but containers interleave the editor's ChildList (insert gaps + selectable
+  // child nodes) in place of the plain child mapping.
   let body: ReactNode;
   if (block.type === "section") {
     body = (
       <div style={sectionStyle(block.props)}>
         <div
-          className="mx-auto"
+          className="mx-auto flex flex-col gap-4"
           style={{
             maxWidth:
               MAX_WIDTH_PX[
                 (block.props.maxWidth as keyof typeof MAX_WIDTH_PX) ?? "wide"
               ],
+            width: "100%",
           }}
         >
           <ChildList
@@ -213,7 +201,7 @@ function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
     );
   } else if (block.type === "card") {
     body = (
-      <div style={cardStyle(block.props)}>
+      <div style={cardStyle(block.props)} className="flex flex-col gap-4">
         <ChildList
           ctx={ctx}
           parentId={block.id}
@@ -226,25 +214,18 @@ function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
     const count = Number(block.props.count ?? 2);
     body = (
       <div
-        className="grid grid-cols-1 md:[grid-template-columns:var(--cols)]"
-        style={
-          {
-            "--cols": ratioToGridColumns(
-              String(block.props.ratio ?? ""),
-              count,
-            ),
-            gap: `${Number(block.props.gap ?? 24)}px`,
-          } as CSSProperties
-        }
+        className="block-columns"
+        style={{
+          display: "grid",
+          gridTemplateColumns: ratioToGridColumns(
+            String(block.props.ratio ?? ""),
+            count,
+          ),
+          gap: `${Number(block.props.gap ?? 24)}px`,
+        }}
       >
-        {(block.children ?? []).map((col, ci) => (
-          <div
-            key={col.id}
-            className="min-w-0 rounded-lg border border-dashed border-border/60 p-1.5"
-          >
-            <p className="mb-1 px-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-              Dálkur {ci + 1}
-            </p>
+        {(block.children ?? []).map((col) => (
+          <div key={col.id} className="flex min-w-0 flex-col gap-4">
             <ChildList
               ctx={ctx}
               parentId={col.id}
@@ -256,10 +237,9 @@ function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
       </div>
     );
   } else {
-    // Leaf block — static preview. pointer-events-none so clicks select it.
-    body = (
-      <div className="pointer-events-none p-3">{renderBlock(block, true)}</div>
-    );
+    // Leaf block — rendered identically to the public site.
+    // pointer-events-none lets clicks fall through to the wrapper for selection.
+    body = <div className="pointer-events-none">{renderBlock(block, true)}</div>;
   }
 
   return (
@@ -269,18 +249,20 @@ function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
         ctx.onSelect(block.id);
       }}
       className={cn(
-        "group/block relative rounded-lg border transition-colors",
+        "group/block relative cursor-pointer rounded-lg transition-shadow",
+        // Unselected blocks look identical to live. Selection/hover are ring
+        // overlays (box-shadow) so they never shift layout.
         selected
-          ? "border-primary ring-1 ring-primary"
-          : "border-border/60 hover:border-border",
+          ? "ring-2 ring-primary"
+          : "md:hover:ring-1 md:hover:ring-primary/30",
         ctx.dragId === block.id && "opacity-40",
       )}
     >
-      {/* Top control bar */}
+      {/* Floating toolbar — appears only on the selected block */}
       <div
         className={cn(
-          "absolute -top-3 right-2 z-10 flex items-center gap-1 rounded-md border border-border bg-card p-1 shadow-sm transition-opacity md:gap-0.5 md:p-0.5",
-          selected ? "opacity-100" : "opacity-0 md:group-hover/block:opacity-100",
+          "absolute -top-4 right-1 z-20 flex items-center gap-1 rounded-lg border border-white/10 bg-background/90 p-1 shadow-lg backdrop-blur-sm transition-opacity md:gap-0.5 md:p-0.5",
+          selected ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       >
         <span
@@ -357,12 +339,7 @@ function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
         </button>
       </div>
 
-      {/* Type label */}
-      <span className="pointer-events-none absolute -top-2.5 left-2 z-10 hidden rounded bg-card px-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground md:block">
-        {TYPE_LABELS[block.type] ?? block.type}
-      </span>
-
-      <div className={cn(isContainer ? "p-2 pt-4" : "")}>{body}</div>
+      {body}
     </div>
   );
 }
