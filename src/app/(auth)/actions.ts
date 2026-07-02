@@ -140,6 +140,17 @@ export async function loginAction(
   return undefined;
 }
 
+// ---- Google OAuth ----------------------------------------------------------
+
+export async function googleSignInAction(formData: FormData) {
+  const cb = formData.get("callbackUrl");
+  const callbackUrl =
+    typeof cb === "string" && cb.startsWith("/") ? cb : "/samfelag";
+  // Triggers the NextAuth Google flow (CSRF handled by NextAuth). Throws the
+  // redirect on success — do not catch it.
+  await signIn("google", { redirectTo: callbackUrl });
+}
+
 // ---- Resend verification ---------------------------------------------------
 
 export async function resendAction(

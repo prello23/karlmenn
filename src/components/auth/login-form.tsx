@@ -6,6 +6,7 @@ import { loginAction, resendAction, type LoginState } from "@/app/(auth)/actions
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/forum/submit-button";
+import { GoogleAuthButton, AuthDivider } from "@/components/auth/google-button";
 
 export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
   const [state, formAction] = useFormState<LoginState, FormData>(
@@ -16,6 +17,9 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
 
   return (
     <div className="space-y-4">
+      <GoogleAuthButton label="Skrá inn með Google" callbackUrl={callbackUrl} />
+      <AuthDivider />
+
       <form action={formAction} className="space-y-4">
         {callbackUrl && (
           <input type="hidden" name="callbackUrl" value={callbackUrl} />

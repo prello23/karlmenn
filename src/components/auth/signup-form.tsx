@@ -7,6 +7,7 @@ import { signUpAction, type SignUpState } from "@/app/(auth)/actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/forum/submit-button";
+import { GoogleAuthButton, AuthDivider } from "@/components/auth/google-button";
 
 export function SignupForm() {
   const [state, formAction] = useFormState<SignUpState, FormData>(
@@ -28,7 +29,11 @@ export function SignupForm() {
   }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <div className="space-y-4">
+      <GoogleAuthButton label="Nýskrá með Google" />
+      <AuthDivider />
+
+      <form action={formAction} className="space-y-4">
       <div className="grid gap-2">
         <Label htmlFor="name">Nafn</Label>
         <Input
@@ -83,6 +88,7 @@ export function SignupForm() {
       )}
 
       <SubmitButton className="w-full">Stofna aðgang</SubmitButton>
-    </form>
+      </form>
+    </div>
   );
 }

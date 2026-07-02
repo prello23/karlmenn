@@ -76,6 +76,103 @@ export async function registerUser(input: {
   return { ok: true };
 }
 
+/**
+ * Create-or-link a user from a Google OAuth profile.
+ *  - If a user with this email already exists (e.g. registered via
+ *    email/password), the Google login is linked to that account by email —
+ *    no duplicate is created. The account is marked email-verified.
+ *  - If no user exists, a new Google-only account is created (no password),
+ *    email pre-verified, and the SAME gender detection + auto-approval logic as
+ *    email registration is applied to the Google given name.
+ * Returns the resolved account's id/role/approval so the caller can gate login.
+ */
+export async function upsertGoogleUser(input: {
+  email: string;
+  name?: string | null;
+  givenName?: string | null;
+  familyName?: string | null;
+  image?: string | null;
+}): Promise<{ id: string; role: string; approvalStatus: string }> {
+  const email = input.email.trim().toLowerCase();
+  const fullName =
+    [input.givenName, input.familyName].filter(Boolean).join(" ").trim() ||
+    (input.name ?? "").trim();
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    // Link Google to the existing account — never create a duplicate.
+    await prisma.user
+      .update({
+        where: { id: existing.id },
+        data: {
+          emailVerified: true, // Google has verified this address
+          image: existing.image ?? input.image ?? null,
+          name: existing.name || fullName,
+          lastLoginAt: new Date(),
+        },
+      })
+      .catch(() => {});
+    return {
+      id: existing.id,
+      role: existing.role,
+      approvalStatus: existing.approvalStatus,
+    };
+  }
+
+  // New Google user — run the same gender assessment as registration.
+  const regSettings = await getRegistrationSettings().catch(() => null);
+  const assessment = await assessGender(
+    fullName,
+    email,
+    regSettings?.checks ?? { name: true, email: true },
+  ).catch(() => null);
+  const autoApprove = Boolean(
+    regSettings?.autoApproveEnabled &&
+      assessment &&
+      assessment.scorePercent >= regSettings.threshold,
+  );
+
+  const created = await prisma.user.create({
+    data: {
+      name: fullName,
+      email,
+      passwordHash: null, // Google-only account
+      image: input.image ?? null,
+      emailVerified: true, // Google already verified the email
+      approvalStatus: autoApprove ? "APPROVED" : "PENDING_APPROVAL",
+      genderAssessment: assessment?.assessment ?? "UNCERTAIN",
+      genderAssessmentScore: assessment?.score ?? null,
+      genderAssessmentDetails: assessment?.details ?? null,
+      lastLoginAt: new Date(),
+    },
+  });
+
+  // Notify admins when a new Google user needs manual approval (best-effort).
+  if (!autoApprove) {
+    try {
+      await prisma.notification.create({
+        data: {
+          type: "PENDING_USER",
+          message: `Nýr notandi (Google) bíður samþykkis: ${email}`,
+          link: "/admin/notendur",
+        },
+      });
+      await sendAdminNotification(
+        "Nýr notandi bíður samþykkis — EkkiEinn.is",
+        `Notandinn ${email} skráði sig inn með Google og bíður nú samþykkis.\n\nFarðu á ${APP_URL}/admin/notendur til að samþykkja eða hafna.`,
+      );
+    } catch {
+      // best-effort — never block sign-in on notification failure
+    }
+  }
+
+  return {
+    id: created.id,
+    role: created.role,
+    approvalStatus: created.approvalStatus,
+  };
+}
+
 export type VerifyResult = "verified" | "already" | "expired" | "invalid";
 
 export async function consumeVerifyToken(token: string): Promise<VerifyResult> {
