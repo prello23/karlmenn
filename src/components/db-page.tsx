@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 
 import { PageHero } from "@/components/page-hero";
+import { PageContent } from "@/components/page-content";
 import { getPage } from "@/lib/pages";
+import { SOGUR_TELJARI, injectCounterMounts } from "@/lib/shortcodes";
 
 /**
  * Builds page metadata from the admin-editable Page record so title/description
@@ -48,10 +50,14 @@ export async function DbPageContent({
       {content && (
         <section className="py-12">
           <div className="container max-w-3xl">
-            <div
-              className="page-content"
-              dangerouslySetInnerHTML={{ __html: content }}
-            />
+            {content.includes(SOGUR_TELJARI) ? (
+              <PageContent html={injectCounterMounts(content)} />
+            ) : (
+              <div
+                className="page-content"
+                dangerouslySetInnerHTML={{ __html: content }}
+              />
+            )}
           </div>
         </section>
       )}
@@ -80,6 +86,9 @@ export async function DbPageFull({
 
   // Full-bleed: the stored HTML carries its own .container/.hero/section layout
   // (karlmenn design), so the wrapper must not constrain width.
+  if (content.includes(SOGUR_TELJARI)) {
+    return <PageContent html={injectCounterMounts(content)} />;
+  }
   return (
     <div
       className="page-content"

@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 
 import { DbPageFull, getPageMetadata } from "@/components/db-page";
-import { HomepageStats } from "@/components/homepage-stats";
-import { getSession } from "@/lib/auth-helpers";
 import { NafnaleitClient } from "./nafnaleit/NafnaleitClient";
 
 export const dynamic = "force-dynamic";
@@ -14,16 +12,13 @@ export function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default async function HomePage() {
-  const session = await getSession();
-  const isLoggedIn = Boolean(session?.user);
-
+export default function HomePage() {
   return (
     <>
+      {/* Editable homepage HTML — the counters, motivational text and CTAs live
+          here as content managed in the admin editor (via the [sogur-teljari]
+          shortcode), NOT as a hardcoded component. */}
       <DbPageFull slug="forsida" fallbackTitle="Þú ert ekki einn" />
-
-      {/* Real community counters + encouragement to share */}
-      <HomepageStats isLoggedIn={isLoggedIn} />
 
       {/* Embedded perpetrator-registry search widget */}
       <section className="pb-16">

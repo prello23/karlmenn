@@ -177,6 +177,40 @@ export function TipTapEditor({
   const [showSizeMenu, setShowSizeMenu] = useState(false);
   const savedRange = useRef<Range | null>(null);
 
+  // Track the last selection inside the editor so font/colour controls (which
+  // steal focus when clicked) can restore it before applying a command.
+  const lastRange = useRef<Range | null>(null);
+  function saveSelection() {
+    const sel = window.getSelection();
+    if (
+      sel &&
+      sel.rangeCount > 0 &&
+      editorRef.current?.contains(sel.anchorNode)
+    ) {
+      lastRange.current = sel.getRangeAt(0).cloneRange();
+    }
+  }
+  function restoreSelection() {
+    editorRef.current?.focus();
+    const sel = window.getSelection();
+    if (lastRange.current && sel) {
+      sel.removeAllRanges();
+      sel.addRange(lastRange.current);
+    }
+  }
+  // Apply an execCommand to the preserved selection (used by font controls).
+  function execOnSelection(command: string, arg?: string) {
+    restoreSelection();
+    // Emit inline style attributes instead of legacy <font> tags where possible.
+    document.execCommand("styleWithCSS", false, "true");
+    exec(command, arg);
+    document.execCommand("styleWithCSS", false, "false");
+  }
+  function insertCounter() {
+    restoreSelection();
+    exec("insertHTML", "<p>[sogur-teljari]</p>");
+  }
+
   // Seed the contenteditable DOM from `html` whenever we (re)enter WYSIWYG
   // mode (and on first mount). Not keyed on `html`, so typing doesn't reset it.
   useEffect(() => {
@@ -346,6 +380,63 @@ export function TipTapEditor({
           🔄 Hreinsa
         </TbBtn>
         <Separator />
+        {/* Font family */}
+        <select
+          title="Leturgerð"
+          defaultValue=""
+          onChange={(e) => {
+            const v = e.target.value;
+            e.currentTarget.selectedIndex = 0;
+            if (v) execOnSelection("fontName", v);
+          }}
+          className="h-8 rounded-md border border-border bg-surface px-1 text-xs font-medium text-foreground hover:bg-secondary focus:outline-none"
+        >
+          <option value="" disabled>
+            Letur
+          </option>
+          <option value="Inter, sans-serif">Inter</option>
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="'Times New Roman', serif">Times</option>
+          <option value="'Courier New', monospace">Courier</option>
+          <option value="Verdana, sans-serif">Verdana</option>
+          <option value="Tahoma, sans-serif">Tahoma</option>
+        </select>
+        {/* Font size (1–7 scale) */}
+        <select
+          title="Leturstærð"
+          defaultValue=""
+          onChange={(e) => {
+            const v = e.target.value;
+            e.currentTarget.selectedIndex = 0;
+            if (v) execOnSelection("fontSize", v);
+          }}
+          className="h-8 rounded-md border border-border bg-surface px-1 text-xs font-medium text-foreground hover:bg-secondary focus:outline-none"
+        >
+          <option value="" disabled>
+            Stærð
+          </option>
+          <option value="1">Mjög lítið</option>
+          <option value="2">Lítið</option>
+          <option value="3">Venjulegt</option>
+          <option value="4">Stórt</option>
+          <option value="5">Stærra</option>
+          <option value="6">Mjög stórt</option>
+          <option value="7">Risastórt</option>
+        </select>
+        {/* Text colour */}
+        <input
+          type="color"
+          title="Litur texta"
+          defaultValue="#f59e0b"
+          onChange={(e) => execOnSelection("foreColor", e.target.value)}
+          className="h-8 w-8 cursor-pointer rounded-md border border-border bg-surface p-0.5"
+        />
+        <Separator />
+        <TbBtn title="Setja inn söguteljara" onClick={insertCounter}>
+          📊 Söguteljari
+        </TbBtn>
+        <Separator />
         <TbBtn title="Sýna HTML" active={htmlMode} onClick={toggleHtml}>
           {"</> HTML"}
         </TbBtn>
@@ -369,6 +460,8 @@ export function TipTapEditor({
           suppressContentEditableWarning
           onInput={handleInput}
           onClick={handleEditorClick}
+          onKeyUp={saveSelection}
+          onMouseUp={saveSelection}
           className="page-content min-h-[400px] rounded-b-lg border border-t-0 border-border bg-[hsl(225,21%,7%)] p-6 focus:outline-none"
           style={{ caretColor: "hsl(38, 92%, 50%)" }}
         />
