@@ -368,16 +368,24 @@ export function BlockEditor({
         <BlockAddMenu onAdd={(type) => handleInsert(null, null, type)} />
       </div>
 
-      {/* Settings panel — slides in from the right */}
+      {/* Settings panel — bottom sheet on mobile, right slide-in on desktop */}
       {selectedBlock && (
-        <div className="fixed inset-y-0 right-0 z-40 w-full max-w-sm border-l border-border bg-card shadow-2xl">
-          <BlockSettingsPanel
-            key={selectedBlock.id}
-            block={selectedBlock}
-            onChange={handleUpdateBlock}
-            onClose={() => setSelectedId(null)}
+        <>
+          {/* Backdrop closes the panel — mobile only */}
+          <div
+            className="fixed inset-0 z-40 bg-background/60 md:hidden"
+            onClick={() => setSelectedId(null)}
+            aria-hidden
           />
-        </div>
+          <div className="fixed inset-x-0 bottom-0 z-50 max-h-[70vh] rounded-t-2xl border border-border bg-card shadow-2xl md:inset-x-auto md:inset-y-0 md:right-0 md:max-h-none md:w-full md:max-w-sm md:rounded-none md:border-y-0 md:border-l">
+            <BlockSettingsPanel
+              key={selectedBlock.id}
+              block={selectedBlock}
+              onChange={handleUpdateBlock}
+              onClose={() => setSelectedId(null)}
+            />
+          </div>
+        </>
       )}
     </div>
   );

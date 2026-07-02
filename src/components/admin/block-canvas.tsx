@@ -127,7 +127,7 @@ function Gap({
         className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface text-muted-foreground opacity-0 transition hover:border-primary hover:text-primary group-hover/gap:opacity-100"
         title="Bæta við blokk hér"
       >
-        <Plus className="h-3.5 w-3.5" />
+        <Plus className="h-5 w-5 md:h-3.5 md:w-3.5" />
       </button>
     </div>
   );
@@ -226,14 +226,16 @@ function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
     const count = Number(block.props.count ?? 2);
     body = (
       <div
-        className="grid"
-        style={{
-          gridTemplateColumns: ratioToGridColumns(
-            String(block.props.ratio ?? ""),
-            count,
-          ),
-          gap: `${Number(block.props.gap ?? 24)}px`,
-        }}
+        className="grid grid-cols-1 md:[grid-template-columns:var(--cols)]"
+        style={
+          {
+            "--cols": ratioToGridColumns(
+              String(block.props.ratio ?? ""),
+              count,
+            ),
+            gap: `${Number(block.props.gap ?? 24)}px`,
+          } as CSSProperties
+        }
       >
         {(block.children ?? []).map((col, ci) => (
           <div
@@ -277,8 +279,8 @@ function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
       {/* Top control bar */}
       <div
         className={cn(
-          "absolute -top-3 right-2 z-10 flex items-center gap-0.5 rounded-md border border-border bg-card p-0.5 shadow-sm transition-opacity",
-          selected ? "opacity-100" : "opacity-0 group-hover/block:opacity-100",
+          "absolute -top-3 right-2 z-10 flex items-center gap-1 rounded-md border border-border bg-card p-1 shadow-sm transition-opacity md:gap-0.5 md:p-0.5",
+          selected ? "opacity-100" : "opacity-0 md:group-hover/block:opacity-100",
         )}
       >
         <span
@@ -294,9 +296,9 @@ function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
             ctx.setDropTarget(null);
           }}
           title="Draga til að færa"
-          className="flex h-6 w-6 cursor-grab items-center justify-center rounded text-muted-foreground hover:bg-secondary active:cursor-grabbing"
+          className="flex h-11 w-11 cursor-grab items-center justify-center rounded text-muted-foreground hover:bg-secondary active:cursor-grabbing md:h-6 md:w-6"
         >
-          <GripVertical className="h-3.5 w-3.5" />
+          <GripVertical className="h-5 w-5 md:h-3.5 md:w-3.5" />
         </span>
         <button
           type="button"
@@ -305,9 +307,9 @@ function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
             e.stopPropagation();
             ctx.onMove(block.id, -1);
           }}
-          className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-secondary"
+          className="flex h-11 w-11 items-center justify-center rounded text-muted-foreground hover:bg-secondary md:h-6 md:w-6"
         >
-          <ArrowUp className="h-3.5 w-3.5" />
+          <ArrowUp className="h-5 w-5 md:h-3.5 md:w-3.5" />
         </button>
         <button
           type="button"
@@ -316,9 +318,9 @@ function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
             e.stopPropagation();
             ctx.onMove(block.id, 1);
           }}
-          className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-secondary"
+          className="flex h-11 w-11 items-center justify-center rounded text-muted-foreground hover:bg-secondary md:h-6 md:w-6"
         >
-          <ArrowDown className="h-3.5 w-3.5" />
+          <ArrowDown className="h-5 w-5 md:h-3.5 md:w-3.5" />
         </button>
         <button
           type="button"
@@ -327,9 +329,9 @@ function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
             e.stopPropagation();
             ctx.onSelect(block.id);
           }}
-          className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-secondary"
+          className="flex h-11 w-11 items-center justify-center rounded text-muted-foreground hover:bg-secondary md:h-6 md:w-6"
         >
-          <Settings2 className="h-3.5 w-3.5" />
+          <Settings2 className="h-5 w-5 md:h-3.5 md:w-3.5" />
         </button>
         <button
           type="button"
@@ -338,9 +340,9 @@ function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
             e.stopPropagation();
             ctx.onDuplicate(block.id);
           }}
-          className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-secondary"
+          className="flex h-11 w-11 items-center justify-center rounded text-muted-foreground hover:bg-secondary md:h-6 md:w-6"
         >
-          <Copy className="h-3.5 w-3.5" />
+          <Copy className="h-5 w-5 md:h-3.5 md:w-3.5" />
         </button>
         <button
           type="button"
@@ -349,14 +351,14 @@ function BlockNode({ ctx, block }: { ctx: Ctx; block: Block }) {
             e.stopPropagation();
             ctx.onRemove(block.id);
           }}
-          className="flex h-6 w-6 items-center justify-center rounded text-destructive hover:bg-secondary"
+          className="flex h-11 w-11 items-center justify-center rounded text-destructive hover:bg-secondary md:h-6 md:w-6"
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <Trash2 className="h-5 w-5 md:h-3.5 md:w-3.5" />
         </button>
       </div>
 
       {/* Type label */}
-      <span className="pointer-events-none absolute -top-2.5 left-2 z-10 rounded bg-card px-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+      <span className="pointer-events-none absolute -top-2.5 left-2 z-10 hidden rounded bg-card px-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground md:block">
         {TYPE_LABELS[block.type] ?? block.type}
       </span>
 

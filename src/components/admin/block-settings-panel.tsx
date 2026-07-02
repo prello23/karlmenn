@@ -818,7 +818,7 @@ export function BlockSettingsPanel({
         <button
           type="button"
           onClick={onClose}
-          className="text-muted-foreground hover:text-foreground"
+          className="-mr-2 flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground md:-mr-1 md:h-8 md:w-8"
           aria-label="Loka"
         >
           <X className="h-5 w-5" />
