@@ -86,15 +86,12 @@ export default function AboutPage() {
                 Verkefni byggt á samstöðu
               </h2>
               <p className="mt-3 text-muted-foreground">
-                Ekki einn er rekið án hagnaðarsjónarmiða og byggir á frjálsum
-                framlögum og styrktarfé.
+                Ekki einn er rekið án hagnaðarsjónarmiða. Skráðu þig og taktu
+                þátt í samfélaginu.
               </p>
               <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
                 <Button asChild>
                   <Link href="/skra">Vertu með</Link>
-                </Button>
-                <Button asChild variant="outline">
-                  <Link href="/dona">Styðja verkefnið</Link>
                 </Button>
               </div>
             </div>

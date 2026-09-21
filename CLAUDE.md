@@ -5,7 +5,6 @@
 - Tailwind CSS + shadcn/ui
 - PostgreSQL (Prisma ORM)
 - NextAuth.js v5
-- Stripe
 
 ## Domain
 - Production: https://ekkieinn.is

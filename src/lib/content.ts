@@ -113,8 +113,6 @@ export const SUPPORTERS: Supporter[] = [
   },
 ];
 
-export const DONATION_PRESETS = [1500, 3500, 7500] as const;
-
 export const SITE = {
   name: "Ekki einn",
   domain: "ekkieinn.is",

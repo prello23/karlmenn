@@ -7,7 +7,6 @@ import {
   Users,
   HeartHandshake,
   ArrowRight,
-  Heart,
   Lock,
 } from "lucide-react";
 
@@ -135,36 +134,6 @@ export default function HomePage() {
                 <p className="mt-3 text-muted-foreground">{step.body}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ---- Donate ---- */}
-      <section className="border-t border-border/60 py-20 sm:py-28">
-        <div className="container">
-          <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-10 sm:p-16">
-            <div className="absolute inset-0 hero-glow opacity-70" aria-hidden />
-            <div className="relative mx-auto max-w-2xl text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-                <Heart className="h-7 w-7" />
-              </div>
-              <h2 className="mt-6 text-3xl font-bold tracking-tight sm:text-4xl">
-                Byggt á frjálsum framlögum
-              </h2>
-              <p className="mt-4 text-lg text-muted-foreground">
-                Allt hér er byggt á frjálsum framlögum frá samfélaginu. Framlög
-                fara beint til lögfræðilegrar og sálfræðilegrar aðstoðar fyrir
-                karlmenn sem þurfa á henni að halda.
-              </p>
-              <div className="mt-8">
-                <Button asChild size="lg">
-                  <Link href="/dona">
-                    <Heart className="h-4 w-4" />
-                    Styðja verkefnið
-                  </Link>
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
       </section>
