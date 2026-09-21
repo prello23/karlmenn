@@ -167,7 +167,7 @@ model Reply {
   @@index([threadId])
 }
 
-// ---- Donations -------------------------------------------------------------
+// ---- Donations (legacy; no longer written — Stripe checkout removed) ------
 
 model Donation {
   id              String   @id @default(cuid())

@@ -83,10 +83,10 @@ const FORSIDA = `<!-- HERO -->
 <section class="bg-surface">
   <div class="container">
     <div class="cta-band">
-      <p class="eyebrow">Stuðningur samfélagsins</p>
-      <h2>Byggt á frjálsum framlögum</h2>
-      <p class="lead" style="margin:0 auto 1.6rem;">Allt hér er rekið af samfélaginu. Framlög fara beint til lögfræðilegrar og sálfræðilegri aðstoðar fyrir þá sem þurfa á að halda.</p>
-      <a href="/styrkja" class="btn btn-primary btn-lg">Styðja verkefnið</a>
+      <p class="eyebrow">Samfélagið</p>
+      <h2>Vertu með</h2>
+      <p class="lead" style="margin:0 auto 1.6rem;">Skráðu þig og taktu þátt. Samfélagið og stuðningurinn eru opnir öllum.</p>
+      <a href="/skra" class="btn btn-primary btn-lg">Skrá mig</a>
     </div>
   </div>
 </section>
@@ -194,27 +194,22 @@ export const PAGES: SeedPage[] = [
       <li><strong>Samfélag án dóma</strong> — hér mætir þú öðrum sem skilja.</li>
       <li><strong>Vernd nafnleyndar</strong> — nöfn eru fjarlægð úr færslum.</li>
     </ul>
-    <p>Verkefnið er rekið án hagnaðarsjónarmiða. Þú getur <a href="/styrkja" class="accent">stutt verkefnið</a>.</p>`,
+    <p>Verkefnið er rekið án hagnaðarsjónarmiða. <a href="/skra" class="accent">Skráðu þig</a> og taktu þátt í samfélaginu.</p>`,
     ),
   },
   {
     slug: "styrkja",
-    title: "Styrktu EkkiEinn.is",
-    menuTitle: "Styrktu okkur",
+    title: "Takk fyrir áhugann — EkkiEinn.is",
+    menuTitle: "Takk fyrir áhugann",
     category: "",
     metaDescription:
-      "Styddu EkkiEinn.is — framlög fara beint í aðstoð fyrir karlmenn.",
+      "EkkiEinn.is tekur ekki við greiðslum eða framlögum á vefnum.",
     content: innerPage(
-      "Framlög",
-      "Saman gerum við gæfumuninn",
-      "Allt hér er byggt á frjálsum framlögum frá samfélaginu.",
-      `    <p>Hver króna fer beint til þeirra sem þurfa á aðstoð að halda.</p>
-    <h2>Hvernig er fjármunum varið?</h2>
-    <ul>
-      <li><strong>Lögfræðiaðstoð</strong> fyrir menn sem standa frammi fyrir ásökunum eða forsjármálum.</li>
-      <li><strong>Sálfræðiþjónusta</strong> — niðurgreidd viðtöl fyrir þá sem hafa ekki efni á því sjálfir.</li>
-      <li><strong>Vitundarvakning</strong> til að ná til fleiri karlmanna sem þurfa stuðning.</li>
-    </ul>`,
+      "Takk fyrir áhugann",
+      "Takk fyrir áhugann",
+      "Við tökum ekki við greiðslum eða framlögum á vefnum.",
+      `    <p>Samfélagið og stuðningurinn eru áfram opnir öllum. Spurningar má senda á <a href="mailto:info@ekkieinn.is" class="accent">info@ekkieinn.is</a>.</p>
+    <p><a href="/" class="accent">Til baka á forsíðu</a> eða <a href="/samfelag" class="accent">samfélagið</a>.</p>`,
     ),
   },
   {

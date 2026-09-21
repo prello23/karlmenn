@@ -80,19 +80,6 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <SiteFooter />
         </div>
-        <Script
-          data-name="BMC-Widget"
-          data-cfasync="false"
-          src="https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js"
-          data-id="ekkieinn"
-          data-description="Styðja EkkiEinn.is"
-          data-message="Ef þér líst vel á þennan vettvang, gefðu okkur stuðning!"
-          data-color="#1a56db"
-          data-position="Right"
-          data-x_margin="18"
-          data-y_margin="18"
-          strategy="lazyOnload"
-        />
       </body>
     </html>
   );

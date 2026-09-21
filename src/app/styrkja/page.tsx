@@ -1,32 +1,46 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
-import { DbPageFull, getPageMetadata } from "@/components/db-page";
-import { Card, CardContent } from "@/components/ui/card";
-import { DonationForm } from "@/components/donation-form";
+import { Button } from "@/components/ui/button";
+import { SITE } from "@/lib/content";
 
-export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Takk fyrir áhugann",
+  description:
+    "EkkiEinn.is tekur ekki við greiðslum eða framlögum á vefnum.",
+};
 
-export function generateMetadata(): Promise<Metadata> {
-  return getPageMetadata("styrkja", {
-    title: "Styrkja",
-    description:
-      "Framlög til EkkiEinn.is fara beint í lögfræðilega og sálfræðilega aðstoð fyrir karlmenn. Eitt skipti eða mánaðarlega, nafnlaust ef þú vilt.",
-  });
-}
-
-export default function DonatePage() {
+export default function DonateInterestPage() {
   return (
-    <>
-      <DbPageFull slug="styrkja" fallbackTitle="Styrktu okkur" />
-      <section className="pb-16">
-        <div className="container max-w-md">
-          <Card>
-            <CardContent className="pt-6">
-              <DonationForm />
-            </CardContent>
-          </Card>
+    <section className="relative flex min-h-[70vh] items-center justify-center overflow-hidden py-20">
+      <div className="absolute inset-0 hero-glow" aria-hidden />
+      <div className="container relative max-w-lg text-center">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          Takk fyrir áhugann
+        </h1>
+        <p className="mt-4 text-lg text-muted-foreground">
+          Við tökum ekki við greiðslum eða framlögum á þessari síðu. Samfélagið
+          og stuðningurinn eru áfram opnir öllum.
+        </p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Spurningar má senda á{" "}
+          <a
+            href={`mailto:${SITE.email}`}
+            className="text-primary hover:underline"
+          >
+            {SITE.email}
+          </a>
+          .
+        </p>
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Button asChild size="lg">
+            <Link href="/">Til baka á forsíðu</Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link href="/samfelag">Samfélagið</Link>
+          </Button>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }

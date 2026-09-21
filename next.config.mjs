@@ -11,8 +11,11 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      { source: "/dona", destination: "/styrkja", permanent: true },
-      { source: "/dona/takk", destination: "/styrkja/takk", permanent: true },
+      { source: "/dona", destination: "/styrkja", permanent: false },
+      { source: "/dona/takk", destination: "/styrkja", permanent: false },
+      { source: "/dona/takk/:path*", destination: "/styrkja", permanent: false },
+      { source: "/styrkja/takk", destination: "/styrkja", permanent: false },
+      { source: "/styrkja/takk/:path*", destination: "/styrkja", permanent: false },
     ];
   },
 };

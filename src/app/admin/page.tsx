@@ -5,7 +5,6 @@ import {
   MessageCircle,
   Flag,
   LifeBuoy,
-  Heart,
   Bell,
 } from "lucide-react";
 
@@ -18,21 +17,20 @@ export const dynamic = "force-dynamic";
 
 async function getStats() {
   try {
-    const [users, threads, replies, flagged, support, donations, notifications] =
+    const [users, threads, replies, flagged, support, notifications] =
       await Promise.all([
         prisma.user.count(),
         prisma.thread.count(),
         prisma.reply.count(),
         prisma.reply.count({ where: { flagged: true } }),
         prisma.supportRequest.count({ where: { status: "OPEN" } }),
-        prisma.donation.count(),
         prisma.notification.findMany({
           where: { isRead: false },
           orderBy: { createdAt: "desc" },
           take: 10,
         }),
       ]);
-    return { users, threads, replies, flagged, support, donations, notifications };
+    return { users, threads, replies, flagged, support, notifications };
   } catch {
     return {
       users: 0,
@@ -40,7 +38,6 @@ async function getStats() {
       replies: 0,
       flagged: 0,
       support: 0,
-      donations: 0,
       notifications: [],
     };
   }
@@ -55,7 +52,6 @@ export default async function AdminDashboard() {
     { label: "Svör", value: stats.replies, icon: MessageCircle, href: "/admin/threads" },
     { label: "Flögguð svör", value: stats.flagged, icon: Flag, href: "/admin/threads" },
     { label: "Opnar stuðningsbeiðnir", value: stats.support, icon: LifeBuoy, href: "/admin" },
-    { label: "Framlög", value: stats.donations, icon: Heart, href: "/admin" },
   ];
 
   return (
