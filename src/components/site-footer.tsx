@@ -17,7 +17,7 @@ export function SiteFooter() {
               <span className="text-lg tracking-tight">{SITE.name}</span>
             </Link>
             <p className="max-w-xs text-sm text-muted-foreground">
-              {SITE.tagline} Byggt á frjálsum framlögum og styrktarfé.
+              {SITE.tagline}
             </p>
             <a
               href={`mailto:${SITE.email}`}

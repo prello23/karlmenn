@@ -42,7 +42,7 @@ export default function SupportPage() {
         <div className="container">
           <h2 className="text-2xl font-bold tracking-tight">Fagaðstoð</h2>
           <p className="mt-2 text-muted-foreground">
-            Aðstoð í boði í gegnum verkefnið — fjármagnað með framlögum og styrktarfé.
+            Aðstoð í boði í gegnum verkefnið.
           </p>
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {SUPPORTERS.map((s) => {

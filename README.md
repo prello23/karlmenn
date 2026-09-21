@@ -9,7 +9,6 @@ um ræðir ofbeldi, rangar sakir, geðheilsu eða löngun til að breyta hegðun
 - Next.js 15 (App Router) · TypeScript · Tailwind CSS · shadcn/ui
 - Prisma + SQLite (skiptanlegt yfir í PostgreSQL)
 - NextAuth.js v5 (Credentials + email-staðfesting)
-- Stripe (frjáls framlög)
 - Nodemailer (staðfestingarpóstar og admin-tilkynningar)
 
 ## Uppsetning (þróun)
@@ -52,14 +51,12 @@ Stjórnkerfið er á `/admin` (þræðir, notendur, flokkar, stillingar).
   sýnileg admin, og hægt að leita eftir geranda til að finna tengd mál.
 - **Stjórnkerfi:** umsjón með þráðum, notendum (hlutverk), flokkum (bæta við /
   breyta nafni / eyða) og stillingum (texti staðfestingarpósts).
-- **Framlög (`/dona`):** Stripe Checkout (test eða live).
 
 ## Umhverfisbreytur
 Sjá `.env.example`. Helstu:
 `DATABASE_URL`, `AUTH_SECRET`/`NEXTAUTH_SECRET`, `NEXTAUTH_URL`,
 `SMTP_HOST`/`SMTP_PORT`/`SMTP_SECURE`/`SMTP_FROM`, `NEXT_PUBLIC_APP_URL`,
-`ANTHROPIC_API_KEY` eða `OPENAI_API_KEY` (valfrjálst), `STRIPE_SECRET_KEY`
-(valfrjálst).
+`ANTHROPIC_API_KEY` eða `OPENAI_API_KEY` (valfrjálst).
 
 ## Hýsing
 - **Production:** https://ekkieinn.is (VPS, PM2 á porti 3002, sjá `ecosystem.config.js`)

@@ -9,7 +9,7 @@ export default function SkilmalarPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-16">
       <h1 className="text-3xl font-bold tracking-tight mb-2">Skilmálar og notendaskilyrði</h1>
-      <p className="text-sm text-muted-foreground mb-10">Síðast uppfært: Júní 2025</p>
+      <p className="text-sm text-muted-foreground mb-10">Síðast uppfært: September 2026</p>
 
       <div className="prose prose-sm dark:prose-invert max-w-none space-y-10">
 
@@ -61,27 +61,20 @@ export default function SkilmalarPage() {
         <section>
           <h2 className="text-xl font-semibold mb-3">4. Styrktarfé og framlög</h2>
           <p>
-            ekkieinn.is tekur á móti styrktarfé til að fjármagna rekstur og þróun vefsíðunnar
-            og til að bjóða upp á fjárhagslegan stuðning við lögfræðilega og sálfræðilega
-            þjónustu, eftir því sem fjárhagslegar aðstæður leyfa. Hluti framlaganna fer beint í
-            rekstur og tækniþróun síðunnar.
-          </p>
-          <p className="mt-2">
-            ekkieinn.is gefur engar tryggingar um að tiltekið magn styrktarfjár verði veitt
-            einstaklingum. Úthlutun fer eftir mati rekstraraðila hverju sinni.
+            ekkieinn.is tekur ekki við greiðslum eða framlögum á vefnum. Síðan
+            er rekin sem samfélagsvettvangur og veitir enga greiðsluþjónustu.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold mb-3">5. Takmarkaðar greiðslur og endurgreiðslur</h2>
+          <h2 className="text-xl font-semibold mb-3">5. Endurgreiðslur</h2>
           <p>
-            Greiðslur sem inntar eru af hendi á ekkieinn.is (t.d. stuðningsgjald eða framlag)
-            eru að jafnaði endanlegar. Endurgreiðslubeiðnir eru teknar til skoðunar í sérstökum
-            tilvikum — hafið samband við{" "}
+            Þar sem ekkieinn.is tekur ekki við greiðslum á vefnum eiga
+            endurgreiðslur ekki við. Fyrirspurnir má senda á{" "}
             <a href="mailto:info@ekkieinn.is" className="text-primary underline">
               info@ekkieinn.is
-            </a>{" "}
-            innan 14 daga frá greiðsludegi.
+            </a>
+            .
           </p>
         </section>
 

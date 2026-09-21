@@ -13,7 +13,6 @@ export const FOOTER_NAV = {
   ],
   Verkefnið: [
     { href: "/um-okkur", label: "Um okkur" },
-    { href: "/dona", label: "Styrkja" },
     { href: "/samband", label: "Samband" },
   ],
   Lögfræðilegt: [
